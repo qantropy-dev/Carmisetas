@@ -1,0 +1,20 @@
+node_modules/
+.next/
+out/
+build/
+.DS_Store
+*.pem
+
+# env
+.env
+.env.local
+.env*.local
+
+# vercel / typescript
+.vercel
+*.tsbuildinfo
+next-env.d.ts.bak
+
+# supabase
+supabase/.branches
+supabase/.temp
