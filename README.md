@@ -21,6 +21,8 @@ Framer Motion · Embla · Supabase (Postgres + Auth + Storage + RLS) · Vercel.
 
 ---
 
+**Desplegar:** ver [DESPLIEGUE.md](./DESPLIEGUE.md).
+
 ## Arrancar
 
 ```bash
@@ -65,6 +67,8 @@ Imprime una contraseña temporal. El script avisa si se pasa de dos cuentas.
 | `npm test` | **Pruebas de la lógica pura: precios, color y pedido** |
 | `npm run e2e` | **Humo del sitio y del panel en un navegador real, a 390 px** |
 | `npm run audit` | **Lighthouse sobre el build, emulando teléfono** |
+| `npm run check` | Dice qué variables de entorno faltan |
+| `npm run brand` | Regenera el logotipo y los iconos desde `brand/` |
 | `npm run seed` | Regenera recortes PNG + `seed.sql` desde `supabase/seed-data.ts` |
 | `npm run db:reset` | `supabase db reset` |
 | `npm run db:types` | Regenera `lib/supabase/database.types.ts` desde la base |

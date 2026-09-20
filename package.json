@@ -25,7 +25,8 @@
     "test": "tsx scripts/test-units.ts",
     "predev": "node scripts/clean-stale-build.mjs",
     "audit": "node scripts/audit.mjs",
-    "brand": "tsx scripts/build-brand-assets.ts"
+    "brand": "tsx scripts/build-brand-assets.ts",
+    "check": "node --env-file-if-exists=.env.local scripts/check-env.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
