@@ -4,13 +4,15 @@
  * (`supabase gen types typescript`), que produce exactamente esta forma.
  */
 
-export type StockStatus = 'disponible' | 'pocas' | 'agotado';
-export type ProductView = 'frente' | 'espalda' | 'detalle' | 'modelo';
-export type GarmentSize = 'S' | 'M' | 'L' | 'XL' | 'XXL';
+/* Las tuplas son la fuente: de ellas salen los tipos Y los enums de Zod, asi
+   que anadir una talla es tocar una linea. El orden es el de display. */
+export const GARMENT_SIZES = ['S', 'M', 'L', 'XL', 'XXL'] as const;
+export const PRODUCT_VIEWS = ['frente', 'espalda', 'detalle', 'modelo'] as const;
+export const STOCK_STATUSES = ['disponible', 'pocas', 'agotado'] as const;
 
-export const GARMENT_SIZES: readonly GarmentSize[] = ['S', 'M', 'L', 'XL', 'XXL'];
-export const PRODUCT_VIEWS: readonly ProductView[] = ['frente', 'espalda', 'detalle', 'modelo'];
-export const STOCK_STATUSES: readonly StockStatus[] = ['disponible', 'pocas', 'agotado'];
+export type GarmentSize = (typeof GARMENT_SIZES)[number];
+export type ProductView = (typeof PRODUCT_VIEWS)[number];
+export type StockStatus = (typeof STOCK_STATUSES)[number];
 
 type Timestamped = { created_at: string };
 

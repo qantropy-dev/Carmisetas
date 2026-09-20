@@ -1,31 +1,52 @@
 import type { Metadata } from 'next';
-import { getCatalog } from '@/lib/queries/products';
+import Link from 'next/link';
+import { Suspense } from 'react';
+import { ProductList } from '@/components/admin/product-list';
+import { EmptyState } from '@/components/ui/empty-state';
+import { SkeletonRows } from '@/components/ui/skeleton';
+import { listProducts, getTaxonomy } from '@/lib/queries/admin';
 
 export const metadata: Metadata = { title: 'Prendas', robots: { index: false, follow: false } };
 
-/* PROVISIONAL (fase 1): prueba de que la sesion de admin lee el catalogo.
-   La fase 2 lo reemplaza por el listado con filtros, switches y drag & drop. */
-export default async function PrendasPage() {
-  const products = await getCatalog();
-
+export default function PrendasPage() {
   return (
-    <>
-      <h1 className="text-3xl">Prendas</h1>
-      <p className="mt-1 text-sm text-muted">{products.length} en el catálogo</p>
+    <div className="mx-auto flex max-w-4xl flex-col gap-5">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl">Prendas</h1>
+          <p className="text-sm text-muted">Orden, visibilidad y precios.</p>
+        </div>
+        <Link
+          href="/admin/prendas/nueva"
+          className="inline-flex min-h-11 items-center rounded-[var(--radius-pill)] bg-fg px-4
+                     text-sm font-medium text-bg"
+        >
+          + Nueva prenda
+        </Link>
+      </header>
 
-      <ul className="mt-6 divide-y divide-muted/20">
-        {products.map((p) => (
-          <li key={p.id} className="flex items-center gap-3 py-3">
-            <span
-              aria-hidden
-              className="size-6 shrink-0 rounded-full border border-muted/30"
-              style={{ backgroundColor: p.swatchHex ?? 'transparent' }}
-            />
-            <span className="min-w-0 flex-1 truncate">{p.name}</span>
-            <span className="shrink-0 text-sm tabular-nums text-muted">{p.price.finalLabel}</span>
-          </li>
-        ))}
-      </ul>
-    </>
+      <Suspense fallback={<SkeletonRows rows={6} />}>
+        <List />
+      </Suspense>
+    </div>
   );
+}
+
+async function List() {
+  const [products, { categories }] = await Promise.all([listProducts(), getTaxonomy()]);
+
+  if (products.length === 0) {
+    return (
+      <EmptyState
+        title="Todavía no hay prendas"
+        detail="Crea la primera, o corre la semilla para empezar con seis de ejemplo."
+      >
+        <Link href="/admin/prendas/nueva" className="mt-2 text-sm underline underline-offset-4">
+          Crear la primera
+        </Link>
+      </EmptyState>
+    );
+  }
+
+  return <ProductList products={products} categories={categories} />;
 }

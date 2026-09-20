@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { signIn, type LoginState } from '@/app/admin/login/actions';
 
@@ -22,6 +22,9 @@ function Submit() {
 
 export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
   const [state, action] = useActionState(signIn, INITIAL);
+  // React 19 resetea el formulario cuando termina la acción. La contraseña se
+  // borre está bien; el correo, no: hay que volver a escribirlo en cada intento.
+  const [email, setEmail] = useState('');
   const message = state.error ?? notice ?? null;
 
   return (
@@ -34,6 +37,8 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
           name="email"
           type="email"
           autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           className="h-12 rounded-xl border border-muted/30 bg-transparent px-4
                      outline-none focus-visible:border-fg"

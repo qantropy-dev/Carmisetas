@@ -26,11 +26,15 @@ site_url = "http://localhost:3000"
 additional_redirect_urls = ["http://localhost:3000"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
-# Sin registro publico: las dos cuentas se crean por seed o invitacion.
+# Sin registro publico: las dos cuentas se crean por seed o por invitacion.
+# Esta es la llave correcta (GOTRUE_DISABLE_SIGNUP).
 enable_signup = false
 
 [auth.email]
-enable_signup = false
+# OJO: en el CLI, auth.email.enable_signup mapea a GOTRUE_EXTERNAL_EMAIL_ENABLED,
+# que apaga el proveedor de correo ENTERO — nadie podria ni siquiera entrar.
+# El registro publico ya queda cerrado con auth.enable_signup de arriba.
+enable_signup = true
 enable_confirmations = false
 double_confirm_changes = true
 

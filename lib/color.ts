@@ -138,3 +138,49 @@ export function tokensToCss(tokens: Record<string, string>, selector = ':root'):
 export function sortByLuminance<T>(items: T[], getHex: (item: T) => string): T[] {
   return [...items].sort((a, b) => relativeLuminance(getHex(b)) - relativeLuminance(getHex(a)));
 }
+
+/**
+ * Propone el color del escenario a partir del color de la prenda.
+ *
+ * Regla: el escenario nunca es el mismo tono que la prenda, o la prenda
+ * desaparece. Una prenda clara pide un escenario algo mas denso; una oscura,
+ * uno mas profundo todavia. Se empuja hasta separar lo suficiente y se
+ * comprueba que el texto siga llegando a AA.
+ */
+export function suggestAmbient(swatchHex: string): string {
+  const swatch = swatchHex.trim().toUpperCase();
+  const light = relativeLuminance(swatch) > 0.42;
+  const target = light ? BRAND.fg : BRAND.bg;
+
+  // Separacion minima prenda/escenario: por debajo de esto se funden.
+  const MIN_SEPARATION = 1.14;
+  let ambient = swatch;
+  for (let t = 0.08; t <= 0.5; t += 0.02) {
+    ambient = mix(swatch, target, t);
+    if (contrastRatio(swatch, ambient) >= MIN_SEPARATION) break;
+  }
+
+  // Si al separarlo el texto se queda sin contraste, se cede en la separacion.
+  if (pickForeground(ambient).ratio < AA_TEXT) {
+    for (let t = 0.5; t >= 0; t -= 0.02) {
+      const candidate = mix(swatch, target, t);
+      if (pickForeground(candidate).ratio >= AA_TEXT) return candidate;
+    }
+  }
+  return ambient;
+}
+
+/**
+ * Placeholder difuminado sin archivo: un SVG de un solo color, en base64.
+ * Sirve para `blurDataURL` de next/image sin guardar nada en la base.
+ */
+export function ambientBlurDataUrl(ambientHex: string): string {
+  const svg =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="8" height="10">` +
+    `<rect width="8" height="10" fill="${ambientHex}"/></svg>`;
+  const encoded =
+    typeof btoa === 'function'
+      ? btoa(svg)
+      : Buffer.from(svg, 'utf8').toString('base64');
+  return `data:image/svg+xml;base64,${encoded}`;
+}

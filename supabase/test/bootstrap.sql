@@ -36,7 +36,12 @@ create table if not exists auth.users (
   raw_app_meta_data jsonb,
   raw_user_meta_data jsonb,
   is_sso_user boolean default false,
-  is_anonymous boolean default false
+  is_anonymous boolean default false,
+  -- GoTrue las lee como string de Go: en null, el login falla.
+  confirmation_token text,
+  recovery_token text,
+  email_change_token_new text,
+  email_change text
 );
 
 create table if not exists auth.identities (

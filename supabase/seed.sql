@@ -174,13 +174,18 @@ commit;
 -- ---------------------------------------------------------------------------
 
   -- admin@carmisetas.local  /  contrasena: carmisetas-dev
+  -- Los cuatro campos de token van en cadena vacia, NUNCA en null: GoTrue los
+  -- lee como string de Go y un null revienta el login con
+  -- "converting NULL to string is unsupported".
   insert into auth.users (
     instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-    created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+    created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+    confirmation_token, recovery_token, email_change_token_new, email_change
   ) values (
     '00000000-0000-0000-0000-000000000000', 'ec94d3bc-e5c4-5168-bc2a-a75c7d190dd8', 'authenticated', 'authenticated',
     'admin@carmisetas.local', extensions.crypt('carmisetas-dev', extensions.gen_salt('bf')), now(),
-    now(), now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, false, false
+    now(), now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, false, false,
+    '', '', '', ''
   ) on conflict (id) do nothing;
 
   insert into auth.identities (
@@ -195,13 +200,18 @@ commit;
   values ('ec94d3bc-e5c4-5168-bc2a-a75c7d190dd8', 'Admin Uno') on conflict (id) do nothing;
 
   -- taller@carmisetas.local  /  contrasena: carmisetas-dev
+  -- Los cuatro campos de token van en cadena vacia, NUNCA en null: GoTrue los
+  -- lee como string de Go y un null revienta el login con
+  -- "converting NULL to string is unsupported".
   insert into auth.users (
     instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
-    created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous
+    created_at, updated_at, raw_app_meta_data, raw_user_meta_data, is_sso_user, is_anonymous,
+    confirmation_token, recovery_token, email_change_token_new, email_change
   ) values (
     '00000000-0000-0000-0000-000000000000', 'a10a96df-2ef6-5636-931c-4e2386a8b8c5', 'authenticated', 'authenticated',
     'taller@carmisetas.local', extensions.crypt('carmisetas-dev', extensions.gen_salt('bf')), now(),
-    now(), now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, false, false
+    now(), now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, false, false,
+    '', '', '', ''
   ) on conflict (id) do nothing;
 
   insert into auth.identities (
