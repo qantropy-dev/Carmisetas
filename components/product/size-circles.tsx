@@ -27,11 +27,12 @@ export function SizeCircles({
     <div
       role={readOnly ? 'list' : 'radiogroup'}
       aria-label={label}
-      className={`flex flex-wrap gap-1.5 ${className}`}
+      // A 390 px, cinco círculos de 40 px más el precio no caben en una fila.
+      className={`flex flex-wrap gap-1 sm:gap-1.5 ${className}`}
     >
       {sizes.map(({ size, available }) => {
         const selected = value === size;
-        const classes = `grid size-10 place-items-center rounded-full border text-sm transition
+        const classes = `grid size-9 place-items-center rounded-full border text-[13px] transition sm:size-10 sm:text-sm
           border-[var(--ambient-hairline)]
           ${selected ? 'border-[var(--ambient-fg)] bg-[var(--ambient-fg)] text-[var(--ambient)]' : ''}
           ${available ? '' : 'line-through opacity-35'}`;

@@ -182,7 +182,7 @@ export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
               initial="enter"
               animate="center"
               exit="exit"
-              className="lg:order-2 lg:text-right"
+              className="min-w-0 lg:order-2 lg:text-right"
             >
               <p className="mb-2 text-[10px] uppercase tracking-[0.16em] text-[var(--ambient-muted)]">
                 {current.colorName}
@@ -199,7 +199,7 @@ export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
               initial="enter"
               animate="center"
               exit="exit"
-              className="lg:order-1"
+              className="shrink-0 lg:order-1"
             >
               <PriceTag price={current.price} size="lg" align="end" className="justify-end" />
             </motion.div>

@@ -30,8 +30,8 @@ export function NextThumb({
       whileHover={{ y: -3 }}
       whileTap={{ scale: 0.97 }}
       transition={{ duration: DURATION.tap, ease: EASE.stage }}
-      className="flex items-center gap-2.5 rounded-[var(--radius-pill)] border p-1 pr-3.5
-                 border-[var(--ambient-hairline)] transition-colors"
+      className="flex shrink-0 items-center gap-2.5 rounded-[var(--radius-pill)] border p-1
+                 border-[var(--ambient-hairline)] transition-colors sm:pr-3.5"
     >
       <motion.span
         key={garment.colorId}
@@ -53,14 +53,23 @@ export function NextThumb({
         ) : null}
       </motion.span>
 
-      <span className="text-left leading-tight">
+      {/* A 390 px, junto a las flechas y los puntos, el texto no cabe: la
+          miniatura sola ya dice cuál viene. Pero se oculta A LA VISTA, no al
+          lector de pantalla, o el botón se queda sin nombre. */}
+      <span className="min-w-0 text-left leading-tight">
         {/* El nombre accesible se compone del texto visible: un aria-label que
             no lo contenga rompe WCAG 2.5.3 y descoloca al control por voz. */}
         <span className="sr-only">Ver </span>
-        <span className="block font-display text-[11px] font-bold uppercase tracking-tight">
+        <span
+          className="sr-only truncate font-display text-[11px] font-bold uppercase tracking-tight
+                     sm:not-sr-only sm:block"
+        >
           {short}
         </span>
-        <span className="block text-[9px] uppercase tracking-[0.14em] text-[var(--ambient-muted)]">
+        <span
+          aria-hidden
+          className="hidden text-[9px] uppercase tracking-[0.14em] text-[var(--ambient-muted)] sm:block"
+        >
           Siguiente
         </span>
       </span>

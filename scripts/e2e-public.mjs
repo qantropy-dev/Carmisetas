@@ -105,10 +105,11 @@ await step('las flechas del teclado funcionan', async () => {
 
 await step('la miniatura muestra la prenda siguiente', async () => {
   // El nombre accesible sale del texto visible (WCAG 2.5.3): "Ver <nombre> Siguiente".
-  const thumb = p.getByRole('button', { name: /^Ver .+ Siguiente$/ });
-  const name = ((await thumb.getAttribute('aria-label')) ?? (await thumb.innerText()))
+  const thumb = p.getByRole('button', { name: /^Ver .+/ });
+  // El nombre accesible sale del contenido; en móvil el texto va en sr-only.
+  const name = ((await thumb.evaluate((el) => el.textContent ?? '')) || '')
     .replace(/^Ver\s*/i, '')
-    .replace(/\s*Siguiente$/i, '')
+    .replace(/\s*Siguiente\s*$/i, '')
     .trim();
   await thumb.click();
   await p.waitForTimeout(1200);
