@@ -14,7 +14,7 @@
 import { existsSync } from 'node:fs';
 import { chromium } from 'playwright';
 
-const B = process.env.BASE_URL ?? 'http://127.0.0.1:3100';
+const B = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 const S = process.env.SHOTS ?? null;
 const HAS_MIRROR = existsSync('public/imgly/resources.json');
 

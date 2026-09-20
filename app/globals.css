@@ -33,6 +33,9 @@
   --duration-swap: 420ms;
 
   --radius-pill: 999px;
+
+  /* Alto de la barra superior. El hero descuenta esto para ocupar el resto. */
+  --nav-h: 60px;
 }
 
 /* ------------------------------------------------------------------ base -- */
@@ -50,8 +53,11 @@
 
   body {
     margin: 0;
-    background-color: var(--color-bg);
-    color: var(--color-fg);
+    /* Por defecto el neutro de marca; cuando hay escenario, su color, que pinta
+       AmbientBackdrop por detrás de todo. */
+    background-color: var(--color-ambient);
+    color: var(--color-ambient-fg);
+    transition: color var(--duration-ambient) var(--ease-stage);
     font-family: var(--font-sans);
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
@@ -96,6 +102,19 @@
 }
 
 /* ------------------------------------------------------------ utilidades -- */
+/* La barra vive sobre el escenario: su altura la fija el token. */
+@layer base {
+  :root {
+    --nav-h: 60px;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      --nav-h: 68px;
+    }
+  }
+}
+
 @utility stage {
   /* Contenedor de un escenario ambiental. Las variables --ambient-* las
      inyecta el servidor en el style del elemento. */
@@ -109,15 +128,31 @@
   border-color: var(--color-ambient-hairline);
 }
 
-/* Oscilacion en reposo de la prenda: 4-6 px, nunca mas. */
+/*
+ * Oscilacion en reposo: 4-6 px, nunca mas. Va en CSS y no en JS a proposito.
+ * Una animacion en bucle y puramente decorativa no tiene por que existir en el
+ * HTML servido: en CSS, `prefers-reduced-motion` la apaga sola y no hay ninguna
+ * rama que pueda desajustar la hidratacion.
+ */
 @keyframes garment-float {
-  0%, 100% { transform: translate3d(0, -5px, 0); }
-  50%      { transform: translate3d(0, 5px, 0); }
+  from { transform: translate3d(0, -5px, 0); }
+  to   { transform: translate3d(0, 5px, 0); }
+}
+
+/* La sombra respira en contrafase: se ensancha cuando la prenda baja. */
+@keyframes garment-shade {
+  from { transform: scaleX(0.88); opacity: 0.8; }
+  to   { transform: scaleX(1.08); opacity: 1; }
 }
 
 @utility float-idle {
   animation: garment-float 3.4s ease-in-out infinite alternate;
   will-change: transform;
+}
+
+@utility shade-idle {
+  animation: garment-shade 3.4s ease-in-out infinite alternate;
+  will-change: transform, opacity;
 }
 
 /* ------------------------------------------------------------ reduced -- */

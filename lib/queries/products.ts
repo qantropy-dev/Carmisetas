@@ -157,6 +157,94 @@ const SIZE_ORDER: readonly GarmentSize[] = ['S', 'M', 'L', 'XL', 'XXL'];
 /* -------------------------------------------------------------- consultas -- */
 
 /** `cache` de React: varias secciones de la misma pagina comparten la consulta. */
+/** Una prenda tal como la muestra el hero: color primario, precio y tallas. */
+export type HeroGarment = {
+  id: string;
+  slug: string;
+  name: string;
+  headline: string | null;
+  description: string | null;
+  categoryName: string | null;
+  colorId: string;
+  colorName: string;
+  swatchHex: string;
+  ambientHex: string;
+  ambient: ReturnType<typeof ambientTokens>;
+  cutoutUrl: string | null;
+  price: ResolvedPrice;
+  sizes: { size: GarmentSize; available: boolean }[];
+};
+
+/**
+ * Las prendas destacadas del carrusel del hero.
+ *
+ * Trae colores y variantes en la misma consulta: el hero necesita las tallas y
+ * una segunda ida a la base por prenda se notaría en el primer paint.
+ */
+export const getHeroGarments = cache(async (): Promise<HeroGarment[]> => {
+  if (!hasSupabaseConfig()) return [];
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('products')
+    .select(
+      `id, slug, name, headline, description, base_price, compare_at_price, sort_order,
+       categories ( name ),
+       product_colors ( * ),
+       product_variants ( * )`,
+    )
+    .eq('is_featured', true)
+    .order('sort_order');
+
+  if (error) throw new Error(`No se pudieron cargar las prendas destacadas: ${error.message}`);
+
+  const rows = (data ?? []) as unknown as {
+    id: string; slug: string; name: string;
+    headline: string | null; description: string | null;
+    base_price: number; compare_at_price: number | null;
+    categories: { name: string } | null;
+    product_colors: ProductColorRow[];
+    product_variants: ProductVariantRow[];
+  }[];
+
+  return rows.flatMap((row) => {
+    const color = [...row.product_colors].sort((a, b) => a.sort_order - b.sort_order)[0];
+    if (!color) return [];
+
+    const mine = row.product_variants.filter((v) => v.color_id === color.id);
+    const prices = mine.map((v) =>
+      effectivePrice({ basePrice: row.base_price, priceOverride: v.price_override }),
+    );
+
+    return [
+      {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        headline: row.headline,
+        description: row.description,
+        categoryName: row.categories?.name ?? null,
+        colorId: color.id,
+        colorName: color.color_name,
+        swatchHex: color.swatch_hex,
+        ambientHex: color.ambient_hex,
+        ambient: ambientTokens(color.ambient_hex),
+        cutoutUrl: color.cutout_url,
+        price: resolvePrice({
+          basePrice: prices.length > 0 ? Math.min(...prices) : row.base_price,
+          compareAtPrice: row.compare_at_price,
+        }),
+        sizes: SIZE_ORDER.map((size) => {
+          const variant = mine.find((v) => v.size === size);
+          return {
+            size,
+            available: Boolean(variant?.is_active) && variant?.stock_status !== 'agotado',
+          };
+        }),
+      },
+    ];
+  });
+});
+
 export const getFeaturedProducts = cache(async (): Promise<ProductCard[]> => {
   if (!hasSupabaseConfig()) return [];
   const supabase = await createClient();

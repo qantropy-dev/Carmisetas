@@ -36,6 +36,9 @@ function supabaseImagePatterns(): NonNullable<NonNullable<NextConfig['images']>[
  */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // El indicador de desarrollo se planta justo encima de las flechas del hero.
+  // Los problemas siguen saliendo por build, lint y typecheck.
+  devIndicators: false,
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: supabaseImagePatterns(),
