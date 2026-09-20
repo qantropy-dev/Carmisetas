@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useEffect } from 'react';
-import { ambientBlurDataUrl } from '@/lib/color';
 import { useMotionPrefs } from '@/lib/motion';
 
 /**
@@ -26,7 +25,6 @@ import { useMotionPrefs } from '@/lib/motion';
 export function FloatingGarment({
   src,
   alt,
-  ambientHex,
   layoutId,
   priority = false,
   sizes = '(max-width: 1024px) 78vw, 42vw',
@@ -34,7 +32,6 @@ export function FloatingGarment({
 }: {
   src: string;
   alt: string;
-  ambientHex: string;
   layoutId?: string;
   priority?: boolean;
   sizes?: string;
@@ -80,8 +77,6 @@ export function FloatingGarment({
             height={820}
             sizes={sizes}
             priority={priority}
-            placeholder="blur"
-            blurDataURL={ambientBlurDataUrl(ambientHex)}
             className="max-h-full w-auto object-contain"
           />
         </motion.div>

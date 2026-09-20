@@ -187,8 +187,9 @@ await step('acepta un archivo', async () => {
 await step('sube el recorte tal cual y sugiere colores', async () => {
   await p.getByRole('button', { name: /Ya viene recortada/ }).click();
   await p.waitForSelector('text=Así se verá en la tienda', { timeout: 40000 });
+  // La previa sale antes que el color: deducirlo lleva su momento.
+  await p.waitForSelector('text=Usar el color que detecté', { timeout: 30000 });
   const text = await p.locator('body').innerText();
-  if (!/Usar el color que detecté/.test(text)) throw new Error('no propuso color dominante');
   const hex = text.match(/#[0-9A-F]{6}/g);
   console.log('        colores propuestos:', hex ? hex.slice(0, 2).join(' / ') : 'ninguno');
 });

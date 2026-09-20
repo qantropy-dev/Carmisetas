@@ -25,8 +25,10 @@ export async function suggestColorsFromImage(source: Blob): Promise<ColorSuggest
     const [r, g, b] = dominant.rgb;
     const swatch = rgbToHex({ r, g, b });
     return { swatch, ambient: suggestAmbient(swatch) };
-  } catch {
-    // Una sugerencia fallida no puede bloquear la subida.
+  } catch (error) {
+    // Una sugerencia fallida no puede bloquear la subida, pero tampoco debe
+    // desaparecer en silencio: sin esto, "no propuso color" no tiene causa.
+    console.warn('No se pudo deducir el color dominante', error);
     return null;
   } finally {
     URL.revokeObjectURL(url);

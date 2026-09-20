@@ -14,8 +14,8 @@ Framer Motion · Embla · Supabase (Postgres + Auth + Storage + RLS) · Vercel.
 |---|---|---|
 | 1 | Base de datos, auth, RLS, semilla de 6 prendas | ✅ |
 | 2 | Admin con recorte automático y color ambiental | ✅ |
-| 3 | Hero color ambiental | pendiente |
-| 4 | Catálogo: Perchero + Lista | pendiente |
+| 3 | Hero color ambiental | ✅ |
+| 4 | Catálogo: Perchero + Lista | ✅ |
 | 5 | Ficha + bolsa + WhatsApp | pendiente |
 | 6 | Total Look, motion fino, SEO y rendimiento | pendiente |
 
@@ -128,6 +128,50 @@ Se muestran en formato `es-CO` (`$ 89.900`). Si `compare_at_price` supera al
 precio final, se tacha y se muestra el porcentaje de descuento.
 
 ---
+
+## El sitio público
+
+**Hero ambiental** (`/`). La prenda destacada flota sobre un escenario que
+adopta su color, y el fondo entero transiciona con ella. Tres zonas en
+escritorio, vertical con swipe en móvil, miniatura de la siguiente prenda en la
+esquina, flechas y teclado.
+
+**Catálogo** (`/catalogo`). Dos vistas, y la vista vive en la URL:
+
+- **Perchero** (`?vista=perchero`): las prendas cuelgan de ganchos sobre una
+  barra y se deslizan con arrastre, swipe, flechas o teclado. Al moverse se
+  balancean desde el gancho.
+- **Lista** (`?vista=lista`): buscador, chips circulares de categoría y grilla
+  bento donde las destacadas ocupan el doble. Al pasar el cursor —o al primer
+  toque en un teléfono— la tarjeta enseña la espalda.
+
+### Cómo está hecho el balanceo del perchero
+
+Embla mueve el carrusel; Framer pone la física. En cada frame se mide la
+derivada del progreso de Embla y esa velocidad alimenta un resorte por gancho.
+El origen de la transformación está **en el gancho**, así que la prenda gira
+desde donde cuelga: es un péndulo, no una rotación decorativa. Al soltar, la
+velocidad cae a cero y el resorte se pasa de largo y se asienta solo.
+
+Medir la velocidad del carrusel en vez de la del puntero hace que el balanceo
+también aparezca con las flechas, con el teclado y con la inercia después de
+soltar, no solo mientras se arrastra. Cada gancho lleva una rigidez ligeramente
+distinta según su posición, para que la fila no se mueva en bloque.
+
+### Movimiento y accesibilidad
+
+Todo el movimiento sale de `lib/motion.ts`: una sola escala de duraciones y
+curvas. Con `prefers-reduced-motion` no hay desplazamiento, ni escala, ni
+flotación, ni parallax: solo fundidos.
+
+Dos reglas que hay que respetar al añadir animación, y que ya costaron un bug:
+
+1. Las variantes deben producir **las mismas propiedades** en ambas ramas.
+   `useReducedMotion()` devuelve `false` en el servidor y puede devolver `true`
+   al hidratar; si una rama tiene `x` y la otra no, React abandona el parcheo.
+2. Los bucles decorativos (flotar, balancearse en reposo) van en **CSS**, no en
+   `animate` de Framer. Framer serializa el estado de `animate` en el HTML y el
+   servidor nunca ve la preferencia del visitante.
 
 ## El panel
 

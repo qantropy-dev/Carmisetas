@@ -150,6 +150,18 @@
   will-change: transform;
 }
 
+/* Oscilacion minima de la prenda colgada cuando nadie la toca. */
+@keyframes hanger-sway {
+  from { transform: rotate(-0.55deg); }
+  to   { transform: rotate(0.55deg); }
+}
+
+@utility sway-idle {
+  transform-origin: 50% 0;
+  animation: hanger-sway 4.6s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
 @utility shade-idle {
   animation: garment-shade 3.4s ease-in-out infinite alternate;
   will-change: transform, opacity;

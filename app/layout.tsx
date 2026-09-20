@@ -40,7 +40,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es-CO" className={`${display.variable} ${body.variable}`}>
+    <html
+      lang="es-CO"
+      data-scroll-behavior="smooth"
+      className={`${display.variable} ${body.variable}`}
+    >
       <head>
         <style dangerouslySetInnerHTML={{ __html: BRAND_CSS }} />
       </head>

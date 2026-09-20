@@ -147,7 +147,6 @@ export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
                 <FloatingGarment
                   src={current.cutoutUrl}
                   alt={`${current.name} en color ${current.colorName}`}
-                  ambientHex={current.ambientHex}
                   layoutId={`garment-${current.colorId}`}
                   priority={index === 0}
                 />

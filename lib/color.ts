@@ -170,17 +170,3 @@ export function suggestAmbient(swatchHex: string): string {
   return ambient;
 }
 
-/**
- * Placeholder difuminado sin archivo: un SVG de un solo color, en base64.
- * Sirve para `blurDataURL` de next/image sin guardar nada en la base.
- */
-export function ambientBlurDataUrl(ambientHex: string): string {
-  const svg =
-    `<svg xmlns="http://www.w3.org/2000/svg" width="8" height="10">` +
-    `<rect width="8" height="10" fill="${ambientHex}"/></svg>`;
-  const encoded =
-    typeof btoa === 'function'
-      ? btoa(svg)
-      : Buffer.from(svg, 'utf8').toString('base64');
-  return `data:image/svg+xml;base64,${encoded}`;
-}

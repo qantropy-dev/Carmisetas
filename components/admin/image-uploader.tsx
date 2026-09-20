@@ -50,6 +50,7 @@ export function ImageUploader({
   const [original, setOriginal] = useState<{ blob: Blob; url: string } | null>(null);
   const [result, setResult] = useState<{ blob: Blob; url: string; cutout: boolean } | null>(null);
   const [suggestion, setSuggestion] = useState<{ swatch: string; ambient: string } | null>(null);
+  const [guessing, setGuessing] = useState(false);
   const [applySuggestion, setApplySuggestion] = useState(true);
   const [setAsCutout, setSetAsCutout] = useState(canSetCutout);
   const [view, setView] = useState<ProductView>(suggestedView ?? 'frente');
@@ -61,6 +62,7 @@ export function ImageUploader({
     setOriginal(null);
     setResult(null);
     setSuggestion(null);
+    setGuessing(false);
     setProgress(null);
     setError(null);
     setStep('elegir');
@@ -104,9 +106,14 @@ export function ImageUploader({
 
   async function finish(blob: Blob, cutout: boolean) {
     setResult({ blob, url: URL.createObjectURL(blob), cutout });
-    setSuggestion(await suggestColorsFromImage(blob));
     setProgress(null);
     setStep('revisar');
+
+    // Deducir el color tarda un momento. La previa se enseña ya y el color
+    // llega después: si no se avisa, parece que la función falló.
+    setGuessing(true);
+    setSuggestion(await suggestColorsFromImage(blob));
+    setGuessing(false);
   }
 
   async function upload() {
@@ -224,6 +231,12 @@ export function ImageUploader({
             <p className="text-xs text-muted">
               Así se verá en la tienda, sobre su color ambiental.
             </p>
+
+            {guessing ? (
+              <p className="text-xs text-muted" role="status">
+                Buscando el color de la prenda…
+              </p>
+            ) : null}
 
             {suggestion ? (
               <label className="flex items-start gap-3 rounded-xl border border-muted/25 p-3">

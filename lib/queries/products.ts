@@ -176,74 +176,86 @@ export type HeroGarment = {
 };
 
 /**
- * Las prendas destacadas del carrusel del hero.
+ * Prendas con su color primario, precio y tallas.
  *
- * Trae colores y variantes en la misma consulta: el hero necesita las tallas y
- * una segunda ida a la base por prenda se notaría en el primer paint.
+ * Trae colores y variantes en la misma consulta: tanto el hero como el perchero
+ * necesitan las tallas, y una segunda ida a la base por prenda se notaría.
  */
-export const getHeroGarments = cache(async (): Promise<HeroGarment[]> => {
-  if (!hasSupabaseConfig()) return [];
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from('products')
-    .select(
-      `id, slug, name, headline, description, base_price, compare_at_price, sort_order,
-       categories ( name ),
-       product_colors ( * ),
-       product_variants ( * )`,
-    )
-    .eq('is_featured', true)
-    .order('sort_order');
+export const getGarments = cache(
+  async (
+    options: { featured?: boolean; categorySlug?: string; search?: string } = {},
+  ): Promise<HeroGarment[]> => {
+    if (!hasSupabaseConfig()) return [];
+    const supabase = await createClient();
 
-  if (error) throw new Error(`No se pudieron cargar las prendas destacadas: ${error.message}`);
+    let query = supabase
+      .from('products')
+      .select(
+        `id, slug, name, headline, description, base_price, compare_at_price, sort_order,
+         categories!inner ( name, slug ),
+         product_colors ( * ),
+         product_variants ( * )`,
+      )
+      .order('sort_order');
 
-  const rows = (data ?? []) as unknown as {
-    id: string; slug: string; name: string;
-    headline: string | null; description: string | null;
-    base_price: number; compare_at_price: number | null;
-    categories: { name: string } | null;
-    product_colors: ProductColorRow[];
-    product_variants: ProductVariantRow[];
-  }[];
+    if (options.featured) query = query.eq('is_featured', true);
+    if (options.categorySlug) query = query.eq('categories.slug', options.categorySlug);
+    if (options.search) query = query.ilike('name', `%${options.search}%`);
 
-  return rows.flatMap((row) => {
-    const color = [...row.product_colors].sort((a, b) => a.sort_order - b.sort_order)[0];
-    if (!color) return [];
+    const { data, error } = await query;
+    if (error) throw new Error(`No se pudieron cargar las prendas: ${error.message}`);
 
-    const mine = row.product_variants.filter((v) => v.color_id === color.id);
-    const prices = mine.map((v) =>
-      effectivePrice({ basePrice: row.base_price, priceOverride: v.price_override }),
-    );
+    const rows = (data ?? []) as unknown as {
+      id: string; slug: string; name: string;
+      headline: string | null; description: string | null;
+      base_price: number; compare_at_price: number | null;
+      categories: { name: string; slug: string } | null;
+      product_colors: ProductColorRow[];
+      product_variants: ProductVariantRow[];
+    }[];
 
-    return [
-      {
-        id: row.id,
-        slug: row.slug,
-        name: row.name,
-        headline: row.headline,
-        description: row.description,
-        categoryName: row.categories?.name ?? null,
-        colorId: color.id,
-        colorName: color.color_name,
-        swatchHex: color.swatch_hex,
-        ambientHex: color.ambient_hex,
-        ambient: ambientTokens(color.ambient_hex),
-        cutoutUrl: color.cutout_url,
-        price: resolvePrice({
-          basePrice: prices.length > 0 ? Math.min(...prices) : row.base_price,
-          compareAtPrice: row.compare_at_price,
-        }),
-        sizes: SIZE_ORDER.map((size) => {
-          const variant = mine.find((v) => v.size === size);
-          return {
-            size,
-            available: Boolean(variant?.is_active) && variant?.stock_status !== 'agotado',
-          };
-        }),
-      },
-    ];
-  });
-});
+    return rows.flatMap((row) => {
+      const color = [...row.product_colors].sort((a, b) => a.sort_order - b.sort_order)[0];
+      if (!color) return [];
+
+      const mine = row.product_variants.filter((v) => v.color_id === color.id);
+      const prices = mine.map((v) =>
+        effectivePrice({ basePrice: row.base_price, priceOverride: v.price_override }),
+      );
+
+      return [
+        {
+          id: row.id,
+          slug: row.slug,
+          name: row.name,
+          headline: row.headline,
+          description: row.description,
+          categoryName: row.categories?.name ?? null,
+          colorId: color.id,
+          colorName: color.color_name,
+          swatchHex: color.swatch_hex,
+          ambientHex: color.ambient_hex,
+          ambient: ambientTokens(color.ambient_hex),
+          cutoutUrl: color.cutout_url,
+          price: resolvePrice({
+            basePrice: prices.length > 0 ? Math.min(...prices) : row.base_price,
+            compareAtPrice: row.compare_at_price,
+          }),
+          sizes: SIZE_ORDER.map((size) => {
+            const variant = mine.find((v) => v.size === size);
+            return {
+              size,
+              available: Boolean(variant?.is_active) && variant?.stock_status !== 'agotado',
+            };
+          }),
+        },
+      ];
+    });
+  },
+);
+
+/** Las destacadas del carrusel del hero. */
+export const getHeroGarments = cache(() => getGarments({ featured: true }));
 
 export const getFeaturedProducts = cache(async (): Promise<ProductCard[]> => {
   if (!hasSupabaseConfig()) return [];
