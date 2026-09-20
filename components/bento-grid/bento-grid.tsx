@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { BentoCard } from '@/components/bento-grid/bento-card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { slugify } from '@/lib/slug';
-import type { ProductCard } from '@/lib/queries/products';
+import type { Garment } from '@/lib/queries/products';
 import type { CategoryRow } from '@/lib/supabase/database.types';
 
 /**
@@ -16,7 +16,7 @@ export function BentoGrid({
   products,
   categories,
 }: {
-  products: ProductCard[];
+  products: Garment[];
   categories: CategoryRow[];
 }) {
   const [search, setSearch] = useState('');
@@ -27,7 +27,7 @@ export function BentoGrid({
     () =>
       products.filter((p) => {
         if (category && p.categorySlug !== category) return false;
-        if (needle && !slugify(`${p.name} ${p.colorName ?? ''}`).includes(needle)) return false;
+        if (needle && !slugify(`${p.name} ${p.colorName}`).includes(needle)) return false;
         return true;
       }),
     [products, category, needle],

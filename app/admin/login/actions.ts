@@ -5,11 +5,21 @@ import { hasSupabaseConfig } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
 import { credentialsSchema } from '@/lib/validators/auth';
 
-export type LoginState = { error: string | null };
+export type LoginState = {
+  error: string | null;
+  /**
+   * El correo vuelve al formulario a propósito. React 19 resetea el formulario
+   * al terminar la acción y el campo queda vacío; devolverlo desde el servidor
+   * lo repone, y además hace que el formulario funcione sin JavaScript.
+   */
+  email: string;
+};
 
 export async function signIn(_prev: LoginState, formData: FormData): Promise<LoginState> {
+  const email = String(formData.get('email') ?? '').trim();
+
   if (!hasSupabaseConfig()) {
-    return { error: 'Supabase no está configurado. Copia .env.example a .env.local.' };
+    return { error: 'Supabase no está configurado. Copia .env.example a .env.local.', email };
   }
 
   const parsed = credentialsSchema.safeParse({
@@ -19,7 +29,7 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos' };
+    return { error: parsed.error.issues[0]?.message ?? 'Revisa los datos', email };
   }
 
   const supabase = await createClient();
@@ -29,7 +39,7 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
   });
 
   // Mensaje deliberadamente vago: no confirmamos si el correo existe.
-  if (error || !data.user) return { error: 'Correo o contraseña incorrectos' };
+  if (error || !data.user) return { error: 'Correo o contraseña incorrectos', email };
 
   // Autenticarse no es ser admin. Sin fila en admin_profiles, no se entra.
   const { data: profile } = await supabase
@@ -40,7 +50,7 @@ export async function signIn(_prev: LoginState, formData: FormData): Promise<Log
 
   if (!profile) {
     await supabase.auth.signOut();
-    return { error: 'Esta cuenta no tiene acceso al panel' };
+    return { error: 'Esta cuenta no tiene acceso al panel', email };
   }
 
   const target = parsed.data.next && parsed.data.next !== '' ? parsed.data.next : '/admin/prendas';

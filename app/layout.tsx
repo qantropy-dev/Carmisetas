@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, Inter } from 'next/font/google';
 import { tokensToCss } from '@/lib/color';
-import { BRAND } from '@/lib/tokens';
+import { BRAND, BRAND_NAME, BRAND_TAGLINE } from '@/lib/tokens';
 import './globals.css';
 
 // Tipografia provisional: se cambia junto con la paleta cuando la marca cierre
@@ -29,8 +29,10 @@ const BRAND_CSS = tokensToCss({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
-  title: { default: 'Carmisetas', template: '%s · Carmisetas' },
-  description: 'Camisetas y suéteres. La prenda, sin ruido alrededor.',
+  title: { default: `${BRAND_NAME} · ${BRAND_TAGLINE}`, template: `%s · ${BRAND_NAME}` },
+  description:
+    'Automotive artwear. Camisetas y suéteres que se recorren como un showroom: cada prenda flota sobre su propio color.',
+  applicationName: BRAND_NAME,
 };
 
 export const viewport: Viewport = {

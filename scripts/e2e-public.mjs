@@ -65,12 +65,26 @@ await step('la flecha cambia el escenario', async () => {
   if ((await token('--ambient')) === before) throw new Error(`no cambió: ${before}`);
 });
 
+/** Luminancia relativa WCAG, para comprobar el contraste sin fijar la paleta. */
+const luminance = (hex) => {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const lin = c.map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+};
+const ratio = (a, bHex) => {
+  const [x, y] = [luminance(a), luminance(bHex)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+};
+
 await step('el texto se invierte sobre un escenario oscuro', async () => {
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 6; i += 1) {
     const [bg, fg] = [await token('--ambient'), await token('--ambient-fg')];
-    // Un escenario oscuro exige texto claro; si no, no se lee.
-    if (bg === '#1C1E22') {
-      if (fg !== '#FAF8F5') throw new Error(`sobre ${bg} el texto quedó en ${fg}`);
+    // Un escenario oscuro exige texto claro. Se comprueba el contraste, no el
+    // color exacto: la paleta de marca puede cambiar y la regla no.
+    if (luminance(bg) < 0.1) {
+      if (luminance(fg) < 0.5) throw new Error(`sobre ${bg} el texto quedó oscuro (${fg})`);
+      const r = ratio(bg, fg);
+      if (r < 4.5) throw new Error(`sobre ${bg} el texto solo llega a ${r.toFixed(2)}:1`);
       return;
     }
     await p.getByRole('button', { name: 'Prenda siguiente' }).click();
@@ -128,6 +142,7 @@ watch(cat);
 await step('el perchero carga y cuelga las prendas', async () => {
   await cat.goto(`${B}/catalogo`, { waitUntil: 'domcontentloaded' });
   await cat.waitForSelector('[aria-roledescription="perchero"]', { timeout: 20000 });
+  await cat.waitForTimeout(1200); // Embla necesita inicializar antes del primer clic.
   const hangers = await cat.locator('button[aria-label^="Ver "]').count();
   if (hangers < 2) throw new Error(`solo ${hangers} ganchos`);
 });
@@ -135,7 +150,7 @@ await step('el perchero carga y cuelga las prendas', async () => {
 await step('la flecha del perchero cambia la prenda', async () => {
   const before = await cat.locator('h2').innerText();
   await cat.getByRole('button', { name: 'Prenda siguiente' }).click();
-  await cat.waitForTimeout(1200);
+  await cat.waitForTimeout(1500);
   if ((await cat.locator('h2').innerText()) === before) throw new Error('no cambió');
 });
 
@@ -181,6 +196,18 @@ await step('la lista filtra por búsqueda y categoría', async () => {
   await cat.getByRole('button', { name: /Camisetas/ }).click();
   await cat.waitForTimeout(400);
   if ((await cat.locator('article').count()) !== 3) throw new Error('el chip no filtró a 3');
+});
+
+await step('se puede comprar desde la lista sin entrar a la ficha', async () => {
+  await visit(cat, '/catalogo?vista=lista', 'article');
+  await cat.locator('button[aria-label^="Agregar "]').first().click();
+  await cat.waitForSelector('dialog[open]', { timeout: 15000 });
+  await cat.locator('dialog[open]').getByRole('radio', { name: 'M', exact: true }).click();
+  await cat.locator('dialog[open]').getByRole('button', { name: 'Agregar a la bolsa' }).click();
+  await cat.waitForSelector('text=Finalizar por WhatsApp', { timeout: 15000 });
+  await cat.getByRole('button', { name: 'Vaciar la bolsa' }).click();
+  await cat.waitForSelector('text=Todavía no has guardado nada', { timeout: 10000 });
+  await cat.getByRole('button', { name: 'Cerrar la bolsa' }).click();
 });
 
 await step('la tarjeta enseña la espalda al pasar el cursor', async () => {

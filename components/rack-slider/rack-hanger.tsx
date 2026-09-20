@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { motion, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { springSwing } from '@/lib/motion';
-import type { HeroGarment } from '@/lib/queries/products';
+import type { Garment } from '@/lib/queries/products';
 
 const MAX_DEG = 7;
 
@@ -25,7 +25,7 @@ export function RackHanger({
   velocity,
   onSelect,
 }: {
-  garment: HeroGarment;
+  garment: Garment;
   index: number;
   active: boolean;
   /** Velocidad del carrusel, compartida por toda la barra. */

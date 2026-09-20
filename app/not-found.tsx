@@ -1,10 +1,11 @@
 import Link from 'next/link';
+import { BrandMark } from '@/components/ui/brand-mark';
 
 export default function NotFound() {
   return (
     <main className="grid min-h-dvh place-items-center px-6 text-center">
       <div className="flex flex-col items-center gap-4">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted">Carmisetas</p>
+        <BrandMark height={13} className="text-fg" />
         <h1 className="text-5xl uppercase">Aquí no hay nada</h1>
         <p className="max-w-sm text-sm leading-relaxed text-muted">
           La prenda que buscas cambió de enlace, se agotó o nunca existió.

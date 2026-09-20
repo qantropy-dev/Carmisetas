@@ -1,9 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ImageResponse } from 'next/og';
+import sharp from 'sharp';
 import { ambientTokens } from '@/lib/color';
 import { publicEnv } from '@/lib/env';
 import { getProductBySlug } from '@/lib/queries/products';
+import { BRAND_TAGLINE } from '@/lib/tokens';
 
 export const alt = 'Carmisetas';
 export const size = { width: 1200, height: 630 };
@@ -37,6 +39,36 @@ async function inlineImage(url: string, siteUrl: string): Promise<string | null>
   } catch {
     // Una tarjeta sin prenda es peor que una tarjeta sin tarjeta, pero fallar
     // la petición entera es peor todavía.
+    return null;
+  }
+}
+
+/**
+ * El logotipo, teñido del color que toque.
+ *
+ * Los archivos de marca son máscaras sin color: aquí hay que pintarlas, porque
+ * `ImageResponse` no entiende `mask-image`. Se cachea por color, que en una
+ * tarjeta solo hay uno.
+ */
+const markCache = new Map<string, string | null>();
+async function brandMark(ink: string): Promise<string | null> {
+  const cached = markCache.get(ink);
+  if (cached !== undefined) return cached;
+  try {
+    const file = path.join(process.cwd(), 'public', 'brand', 'wordmark.png');
+    const shape = await sharp(file).resize({ height: 44 }).png().toBuffer();
+    const meta = await sharp(shape).metadata();
+    const colored = await sharp({
+      create: { width: meta.width ?? 1, height: meta.height ?? 1, channels: 4, background: ink },
+    })
+      .composite([{ input: shape, blend: 'dest-in' }])
+      .png()
+      .toBuffer();
+    const uri = `data:image/png;base64,${colored.toString('base64')}`;
+    markCache.set(ink, uri);
+    return uri;
+  } catch {
+    markCache.set(ink, null);
     return null;
   }
 }
@@ -95,7 +127,10 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   }
 
   const tokens = ambientTokens(color.ambientHex);
-  const cutout = color.cutoutUrl ? await inlineImage(color.cutoutUrl, site) : null;
+  const [cutout, mark] = await Promise.all([
+    color.cutoutUrl ? inlineImage(color.cutoutUrl, site) : Promise.resolve(null),
+    brandMark(tokens['--ambient-fg']),
+  ]);
 
   return new ImageResponse(
     (
@@ -112,21 +147,36 @@ export default async function Image({ params }: { params: Promise<{ slug: string
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', maxWidth: 580 }}>
+          {mark ? (
+            <img src={mark} alt="" width={340} height={21} />
+          ) : (
+            <div
+              style={{
+                fontSize: 22,
+                letterSpacing: '0.22em',
+                textTransform: 'uppercase',
+                color: tokens['--ambient-muted'],
+              }}
+            >
+              Carmisetas
+            </div>
+          )}
           <div
             style={{
-              fontSize: 22,
-              letterSpacing: '0.22em',
+              marginTop: 10,
+              fontSize: 16,
+              letterSpacing: '0.28em',
               textTransform: 'uppercase',
               color: tokens['--ambient-muted'],
             }}
           >
-            Carmisetas
+            {BRAND_TAGLINE}
           </div>
           <div
             style={{
-              marginTop: 18,
+              marginTop: 26,
               fontFamily: display,
-              fontSize: 84,
+              fontSize: 78,
               lineHeight: 0.92,
               letterSpacing: '-0.05em',
               textTransform: 'uppercase',

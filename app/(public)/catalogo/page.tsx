@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { ViewToggle, type CatalogView } from '@/components/ui/view-toggle';
 import { ambientTokens, tokensToCss } from '@/lib/color';
 import { hasSupabaseConfig } from '@/lib/env';
-import { getCatalog, getCategories, getGarments } from '@/lib/queries/products';
+import { getCategories, getGarments } from '@/lib/queries/products';
 
 export const metadata: Metadata = {
   title: 'Catálogo',
@@ -38,13 +38,10 @@ export default async function CatalogoPage({
     );
   }
 
-  const [categories, garments, cards] = await Promise.all([
-    getCategories(),
-    view === 'perchero' ? getGarments() : Promise.resolve([]),
-    view === 'lista' ? getCatalog() : Promise.resolve([]),
-  ]);
-
-  const empty = view === 'perchero' ? garments.length === 0 : cards.length === 0;
+  // Una sola consulta para las dos vistas: trae tallas con su id de variante,
+  // que es lo que permite meter una prenda en la bolsa sin entrar a la ficha.
+  const [categories, garments] = await Promise.all([getCategories(), getGarments()]);
+  const empty = garments.length === 0;
   const tokens = view === 'perchero' && garments[0] ? garments[0].ambient : LIST_AMBIENT;
 
   return (
@@ -76,7 +73,7 @@ export default async function CatalogoPage({
       ) : (
         <div className="px-5 pb-16 sm:px-8">
           <AmbientBackdrop tokens={LIST_AMBIENT} />
-          <BentoGrid products={cards} categories={categories} />
+          <BentoGrid products={garments} categories={categories} />
         </div>
       )}
     </main>

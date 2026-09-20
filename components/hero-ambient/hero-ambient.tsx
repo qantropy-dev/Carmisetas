@@ -9,18 +9,18 @@ import { NextThumb } from '@/components/hero-ambient/next-thumb';
 import { PriceTag } from '@/components/product/price-tag';
 import { SizeCircles } from '@/components/product/size-circles';
 import { useMotionPrefs } from '@/lib/motion';
-import type { HeroGarment } from '@/lib/queries/products';
+import type { Garment } from '@/lib/queries/products';
 
 const SWIPE_PX = 56;
 
-export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
+export function HeroAmbient({ garments }: { garments: Garment[] }) {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const { garmentVariants, textVariants } = useMotionPrefs();
 
   const total = garments.length;
-  const current = garments[index] as HeroGarment;
-  const next = garments[(index + 1) % total] as HeroGarment;
+  const current = garments[index] as Garment;
+  const next = garments[(index + 1) % total] as Garment;
 
   const go = useCallback(
     (step: number) => {

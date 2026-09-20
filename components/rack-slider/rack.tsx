@@ -4,18 +4,19 @@ import Link from 'next/link';
 import useEmblaCarousel from 'embla-carousel-react';
 import { AnimatePresence, motion, useMotionValue } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { QuickAdd } from '@/components/bag/quick-add';
 import { AmbientBackdrop } from '@/components/hero-ambient/ambient-backdrop';
 import { RackHanger } from '@/components/rack-slider/rack-hanger';
 import { PriceTag } from '@/components/product/price-tag';
 import { FavoriteButton } from '@/components/ui/favorite-button';
 import { useMotionPrefs } from '@/lib/motion';
-import type { HeroGarment } from '@/lib/queries/products';
+import type { Garment } from '@/lib/queries/products';
 import { GARMENT_SIZES } from '@/lib/supabase/database.types';
 
 /** Cuánta rotación produce la velocidad del arrastre. */
 const VELOCITY_TO_DEG = 170;
 
-export function Rack({ garments }: { garments: HeroGarment[] }) {
+export function Rack({ garments }: { garments: Garment[] }) {
   const [emblaRef, embla] = useEmblaCarousel({
     align: 'center',
     containScroll: 'trimSnaps',
@@ -26,7 +27,8 @@ export function Rack({ garments }: { garments: HeroGarment[] }) {
   const { reduced, textVariants } = useMotionPrefs();
   const last = useRef({ progress: 0, time: 0 });
 
-  const current = garments[index] as HeroGarment;
+  const [adding, setAdding] = useState(false);
+  const current = garments[index] as Garment;
 
   useEffect(() => {
     if (!embla) return;
@@ -198,9 +200,19 @@ export function Rack({ garments }: { garments: HeroGarment[] }) {
               initial="enter"
               animate="center"
               exit="exit"
-              className="mt-1 flex items-center gap-3"
+              className="mt-1 flex items-center gap-2.5"
             >
               <FavoriteButton id={current.id} name={current.name} />
+              <button
+                type="button"
+                onClick={() => setAdding(true)}
+                disabled={!current.sizes.some((s) => s.available)}
+                className="min-h-11 rounded-[var(--radius-pill)] px-5 text-sm font-medium
+                           bg-[var(--ambient-fg)] text-[var(--ambient)]
+                           transition-opacity disabled:opacity-40"
+              >
+                {current.sizes.some((s) => s.available) ? 'Agregar' : 'Agotada'}
+              </button>
               <Link
                 href={`/prenda/${current.slug}`}
                 className="text-sm underline underline-offset-4 decoration-[var(--ambient-hairline)]
@@ -256,6 +268,8 @@ export function Rack({ garments }: { garments: HeroGarment[] }) {
           </button>
         </div>
       </div>
+
+      {adding ? <QuickAdd garment={current} open onClose={() => setAdding(false)} /> : null}
     </div>
   );
 }

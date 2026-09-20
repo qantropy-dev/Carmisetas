@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { BrandMark } from '@/components/ui/brand-mark';
 
 const LINKS = [
   { href: '/', label: 'Inicio' },
@@ -28,10 +29,9 @@ export function PillNav({ children }: { children?: React.ReactNode }) {
         backgroundColor: 'var(--ambient)',
       }}
     >
-      <Link href="/" className="flex min-h-11 shrink-0 items-center leading-none">
-        <span className="font-display text-[15px] font-extrabold uppercase tracking-[-0.045em]">
-          Carmisetas
-        </span>
+      <Link href="/" className="flex min-h-11 shrink-0 items-center" aria-label="Carmisetas, inicio">
+        <BrandMark height={11} className="sm:hidden" />
+        <BrandMark height={13} className="hidden sm:flex" />
       </Link>
 
       <nav

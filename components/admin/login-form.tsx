@@ -1,10 +1,10 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { signIn, type LoginState } from '@/app/admin/login/actions';
 
-const INITIAL: LoginState = { error: null };
+const INITIAL: LoginState = { error: null, email: '' };
 
 function Submit() {
   const { pending } = useFormStatus();
@@ -22,9 +22,21 @@ function Submit() {
 
 export function LoginForm({ next, notice }: { next?: string; notice?: string }) {
   const [state, action] = useActionState(signIn, INITIAL);
-  // React 19 resetea el formulario cuando termina la acción. La contraseña se
-  // borre está bien; el correo, no: hay que volver a escribirlo en cada intento.
-  const [email, setEmail] = useState('');
+
+  /*
+   * React 19 resetea el formulario cuando termina la acción, y lo hace sobre el
+   * DOM. El valor que se envía sale del DOM, no del estado de React, así que
+   * tener el correo en un useState no basta: el campo queda vacío y el segundo
+   * intento viaja sin correo.
+   *
+   * Por eso el correo vuelve desde el servidor y el campo se remonta con él.
+   * De paso, el formulario sigue funcionando con JavaScript desactivado.
+   */
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    setAttempt((n) => n + 1);
+  }, [state]);
   const message = state.error ?? notice ?? null;
 
   return (
@@ -34,11 +46,11 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-[0.14em] text-muted">Correo</span>
         <input
+          key={`email-${attempt}`}
           name="email"
           type="email"
           autoComplete="username"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          defaultValue={state.email}
           required
           className="h-12 rounded-xl border border-muted/30 bg-transparent px-4
                      outline-none focus-visible:border-fg"

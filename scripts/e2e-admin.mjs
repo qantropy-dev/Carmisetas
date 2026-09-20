@@ -204,6 +204,9 @@ await step('etiqueta la vista y sube', async () => {
 await step('la imagen queda en la ficha', async () => {
   await p.reload({ waitUntil: 'domcontentloaded' });
   await p.waitForSelector('text=Colores', { timeout: 20000 });
+  // Tras recargar, un clic antes de que hidrate no hace nada: hay que esperar
+  // a que el panel de imágenes responda de verdad.
+  await p.waitForTimeout(2000);
   const after = await p.locator('li > button').count();
   if (after <= before) throw new Error(`antes ${before}, despues ${after}`);
 });
@@ -212,8 +215,17 @@ await shot(p, 'adm-imagen');
 
 await step(HAS_MIRROR ? 'recorte automatico con el modelo' : 'recorte automatico (saltado: sin espejo local)', async () => {
   if (!HAS_MIRROR) return;
+  // El modelo son decenas de MB: este paso necesita margen y un respiro antes,
+  // sobre todo si acaba de correr otra subida.
   await p.getByRole('button', { name: '+ Imagen' }).first().click();
-  await p.setInputFiles('#uploader-file', 'public/seed/camiseta-bruma-arena-frente.png');
+  // Esperar al panel abierto, no solo al input: el anterior puede estar aún
+  // cerrándose y el clic caer en el vacío.
+  await p.waitForSelector('text=Tomar o elegir una foto', { timeout: 30000 });
+  await p.waitForSelector('#uploader-file', { state: 'attached', timeout: 30000 });
+  await p.waitForTimeout(1200);
+  await p.setInputFiles('#uploader-file', 'public/seed/camiseta-bruma-arena-frente.png', {
+    timeout: 60000,
+  });
   await p.getByRole('button', { name: 'Quitar el fondo', exact: true }).click();
   await p.waitForSelector('text=Así se verá en la tienda', { timeout: 240000 });
 });

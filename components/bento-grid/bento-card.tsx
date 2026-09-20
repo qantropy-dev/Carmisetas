@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { PriceTag } from '@/components/product/price-tag';
 import { FavoriteButton } from '@/components/ui/favorite-button';
 import { DURATION, EASE } from '@/lib/motion';
-import type { ProductCard } from '@/lib/queries/products';
+import { QuickAdd } from '@/components/bag/quick-add';
+import type { Garment } from '@/lib/queries/products';
 
 /**
  * Tarjeta del bento.
@@ -21,15 +22,17 @@ export function BentoCard({
   large = false,
   priority = false,
 }: {
-  product: ProductCard;
+  product: Garment;
   large?: boolean;
   /** Las primeras tarjetas son el LCP de la lista: no pueden ir diferidas. */
   priority?: boolean;
 }) {
   const [flipped, setFlipped] = useState(false);
+  const [adding, setAdding] = useState(false);
   const hasBack = Boolean(product.backUrl);
   const showBack = flipped && hasBack;
   const fade = `opacity ${DURATION.swap}s cubic-bezier(${EASE.stage.join(',')})`;
+  const inStock = product.sizes.some((s) => s.available);
   const sizes = large
     ? '(max-width: 640px) 88vw, 44vw'
     : '(max-width: 640px) 44vw, 23vw';
@@ -70,7 +73,7 @@ export function BentoCard({
               hidratado, sin depender de que una animación llegue a correr. */}
           {product.cutoutUrl ? (
             <motion.div
-              {...(product.colorId ? { layoutId: `garment-${product.colorId}` } : {})}
+              layoutId={`garment-${product.colorId}`}
               className="grid h-full w-full place-items-center"
               style={{ opacity: showBack ? 0 : 1, transition: fade }}
             >
@@ -103,7 +106,7 @@ export function BentoCard({
             </div>
           ) : null}
 
-          {!product.inStock ? (
+          {!inStock ? (
             <span
               className="absolute left-4 top-4 rounded-[var(--radius-pill)] px-2.5 py-1 text-[10px]
                          uppercase tracking-[0.12em]"
@@ -134,9 +137,25 @@ export function BentoCard({
         </div>
       </Link>
 
-      <div className="absolute right-3 top-3">
-        <FavoriteButton id={product.id} name={product.name} className="size-9 backdrop-blur-sm" />
+      <div className="absolute right-3 top-3 flex flex-col gap-1.5">
+        <FavoriteButton id={product.id} name={product.name} className="size-9" />
+        {inStock ? (
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            aria-label={`Agregar ${product.name} a la bolsa`}
+            className="grid size-9 place-items-center rounded-full border text-lg leading-none
+                       border-[var(--ambient-hairline)] transition-colors
+                       hover:border-[var(--ambient-fg)]"
+          >
+            <span aria-hidden>+</span>
+          </button>
+        ) : null}
       </div>
+
+      {/* Se monta solo al abrirlo: seis <dialog> ocultos en la grilla no
+          aportan nada y ensucian el árbol. */}
+      {adding ? <QuickAdd garment={product} open onClose={() => setAdding(false)} /> : null}
     </article>
   );
 }

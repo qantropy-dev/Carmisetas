@@ -24,7 +24,8 @@
     "e2e:admin": "node scripts/e2e-admin.mjs",
     "test": "tsx scripts/test-units.ts",
     "predev": "node scripts/clean-stale-build.mjs",
-    "audit": "node scripts/audit.mjs"
+    "audit": "node scripts/audit.mjs",
+    "brand": "tsx scripts/build-brand-assets.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

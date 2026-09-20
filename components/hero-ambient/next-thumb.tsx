@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { DURATION, EASE } from '@/lib/motion';
-import type { HeroGarment } from '@/lib/queries/products';
+import type { Garment } from '@/lib/queries/products';
 
 /**
  * Miniatura de la siguiente prenda, en la esquina.
@@ -16,7 +16,7 @@ export function NextThumb({
   garment,
   onSelect,
 }: {
-  garment: HeroGarment;
+  garment: Garment;
   onSelect: () => void;
 }) {
   // El boton enseña el nombre corto; el nombre accesible tiene que contenerlo,

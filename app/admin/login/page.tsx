@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BrandMark } from '@/components/ui/brand-mark';
 import { LoginForm } from '@/components/admin/login-form';
 
 export const metadata: Metadata = { title: 'Entrar', robots: { index: false, follow: false } };
@@ -18,8 +19,8 @@ export default async function LoginPage({
     <main className="grid min-h-dvh place-items-center px-6 py-16">
       <div className="flex w-full max-w-sm flex-col items-start gap-8">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-muted">Carmisetas</p>
-          <h1 className="mt-2 text-4xl">Panel</h1>
+          <BrandMark height={13} className="text-fg" />
+          <h1 className="mt-4 text-4xl">Panel</h1>
         </div>
         <LoginForm
           {...(params.next ? { next: params.next } : {})}
