@@ -19,9 +19,12 @@ import type { ProductCard } from '@/lib/queries/products';
 export function BentoCard({
   product,
   large = false,
+  priority = false,
 }: {
   product: ProductCard;
   large?: boolean;
+  /** Las primeras tarjetas son el LCP de la lista: no pueden ir diferidas. */
+  priority?: boolean;
 }) {
   const [flipped, setFlipped] = useState(false);
   const hasBack = Boolean(product.backUrl);
@@ -34,7 +37,16 @@ export function BentoCard({
   return (
     <article
       className={`group relative overflow-hidden rounded-3xl ${large ? 'sm:col-span-2 sm:row-span-2' : ''}`}
-      style={{ backgroundColor: product.ambientHex, color: product.ambient['--ambient-fg'] }}
+      // Los tokens completos, no solo el fondo: si solo se pusiera el color de
+      // fondo, un hijo que use --ambient-muted leería el de la página y el
+      // contraste calculado no correspondería a esta tarjeta.
+      style={
+        {
+          ...product.ambient,
+          backgroundColor: 'var(--ambient)',
+          color: 'var(--ambient-fg)',
+        } as React.CSSProperties
+      }
       onMouseEnter={() => setFlipped(true)}
       onMouseLeave={() => setFlipped(false)}
     >
@@ -68,6 +80,7 @@ export function BentoCard({
                 width={640}
                 height={820}
                 sizes={sizes}
+                priority={priority}
                 className="max-h-full w-auto object-contain"
               />
             </motion.div>
@@ -94,7 +107,7 @@ export function BentoCard({
             <span
               className="absolute left-4 top-4 rounded-[var(--radius-pill)] px-2.5 py-1 text-[10px]
                          uppercase tracking-[0.12em]"
-              style={{ backgroundColor: product.ambient['--ambient-veil'] }}
+              style={{ backgroundColor: 'var(--ambient-veil)' }}
             >
               Agotada
             </span>
@@ -105,13 +118,13 @@ export function BentoCard({
             en la misma línea sin recortar uno de los dos. */}
         <div className="mt-auto flex flex-col gap-1 p-4 pt-0 sm:p-5 sm:pt-0">
           <div className="min-w-0">
-            <h3 className={`truncate uppercase ${large ? 'text-xl' : 'text-[15px]'}`}>
+            <h2 className={`truncate uppercase ${large ? 'text-xl' : 'text-[15px]'}`}>
               {product.name}
-            </h3>
+            </h2>
             {product.colorName ? (
               <p
                 className="mt-0.5 truncate text-[10px] uppercase tracking-[0.12em]"
-                style={{ color: product.ambient['--ambient-muted'] }}
+                style={{ color: 'var(--ambient-muted)' }}
               >
                 {product.colorName}
               </p>
@@ -121,10 +134,7 @@ export function BentoCard({
         </div>
       </Link>
 
-      <div
-        className="absolute right-3 top-3"
-        style={{ ['--ambient-hairline' as string]: product.ambient['--ambient-hairline'] }}
-      >
+      <div className="absolute right-3 top-3">
         <FavoriteButton id={product.id} name={product.name} className="size-9 backdrop-blur-sm" />
       </div>
     </article>

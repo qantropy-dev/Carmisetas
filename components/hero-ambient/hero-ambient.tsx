@@ -30,14 +30,23 @@ export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
     [total],
   );
 
-  useEffect(() => {
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'ArrowRight') go(1);
-      if (event.key === 'ArrowLeft') go(-1);
-    }
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [go]);
+  /*
+   * Las flechas se escuchan en el propio hero, no en `window`. Con Total Look
+   * debajo, un listener global secuestraría las flechas de toda la página:
+   * estarías leyendo otra sección y el hero cambiaría de prenda a tu espalda.
+   */
+  const onKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        go(1);
+      } else if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        go(-1);
+      }
+    },
+    [go],
+  );
 
   // Precargar la siguiente: el cambio tiene que sentirse instantáneo.
   useEffect(() => {
@@ -47,7 +56,15 @@ export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
   }, [next.cutoutUrl]);
 
   return (
-    <div className="flex min-h-[calc(100dvh-var(--nav-h))] flex-col px-5 sm:px-8">
+    <div
+      role="group"
+      aria-roledescription="carrusel"
+      aria-label="Prendas destacadas. Usa las flechas para recorrerlas."
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      data-hero
+      className="flex min-h-[calc(100dvh-var(--nav-h))] flex-col px-5 focus-visible:outline-offset-[-2px] sm:px-8"
+    >
       <AmbientBackdrop tokens={current.ambient} />
       <div
         className="grid flex-1 grid-rows-[auto_minmax(0,1fr)_auto] items-center gap-3 py-4
@@ -211,7 +228,7 @@ export function HeroAmbient({ garments }: { garments: HeroGarment[] }) {
                 }}
                 aria-label={garment.name}
                 aria-current={i === index ? 'true' : undefined}
-                className="grid h-7 place-items-center px-0.5"
+                className="grid size-7 place-items-center"
               >
                 <span
                   className={`block h-0.5 rounded-full transition-all

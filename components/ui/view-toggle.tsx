@@ -19,7 +19,7 @@ export function ViewToggle({ current }: { current: CatalogView }) {
       role="group"
       aria-label="Forma de ver el catálogo"
       className="inline-flex rounded-[var(--radius-pill)] p-1"
-      style={{ backgroundColor: 'color-mix(in srgb, var(--ambient-fg) 7%, transparent)' }}
+      style={{ backgroundColor: 'var(--ambient-veil)' }}
     >
       {options.map((option) => {
         const active = option.value === current;
@@ -29,7 +29,8 @@ export function ViewToggle({ current }: { current: CatalogView }) {
             href={`/catalogo?vista=${option.value}`}
             scroll={false}
             aria-current={active ? 'true' : undefined}
-            className={`rounded-[var(--radius-pill)] px-3.5 py-2 text-[13px] transition-colors
+            className={`flex min-h-10 items-center rounded-[var(--radius-pill)] px-3.5 text-[13px]
+              transition-colors
               ${active
                 ? 'bg-[var(--ambient-fg)] text-[var(--ambient)]'
                 : 'text-[var(--ambient-muted)] hover:text-[var(--ambient-fg)]'}`}

@@ -233,7 +233,7 @@ export function Rack({ garments }: { garments: HeroGarment[] }) {
                   onClick={() => scrollTo(i)}
                   aria-label={garment.name}
                   aria-current={i === index ? 'true' : undefined}
-                  className="grid h-7 place-items-center px-0.5"
+                  className="grid size-7 place-items-center"
                 >
                   <span
                     className={`block size-1.5 rounded-full transition-all

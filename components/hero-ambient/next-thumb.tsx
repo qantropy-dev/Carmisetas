@@ -19,6 +19,10 @@ export function NextThumb({
   garment: HeroGarment;
   onSelect: () => void;
 }) {
+  // El boton enseña el nombre corto; el nombre accesible tiene que contenerlo,
+  // o un lector de pantalla y la voz del usuario dicen cosas distintas.
+  const short = garment.name.replace(/^(Camiseta|Suéter|Cardigan)\s/i, '');
+
   return (
     <motion.button
       type="button"
@@ -28,7 +32,6 @@ export function NextThumb({
       transition={{ duration: DURATION.tap, ease: EASE.stage }}
       className="flex items-center gap-2.5 rounded-[var(--radius-pill)] border p-1 pr-3.5
                  border-[var(--ambient-hairline)] transition-colors"
-      aria-label={`Ver ${garment.name}`}
     >
       <motion.span
         key={garment.colorId}
@@ -51,8 +54,11 @@ export function NextThumb({
       </motion.span>
 
       <span className="text-left leading-tight">
+        {/* El nombre accesible se compone del texto visible: un aria-label que
+            no lo contenga rompe WCAG 2.5.3 y descoloca al control por voz. */}
+        <span className="sr-only">Ver </span>
         <span className="block font-display text-[11px] font-bold uppercase tracking-tight">
-          {garment.name.replace(/^(Camiseta|Suéter|Cardigan)\s/i, '')}
+          {short}
         </span>
         <span className="block text-[9px] uppercase tracking-[0.14em] text-[var(--ambient-muted)]">
           Siguiente

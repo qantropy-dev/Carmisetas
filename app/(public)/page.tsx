@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { HeroAmbient } from '@/components/hero-ambient/hero-ambient';
+import { TotalLook } from '@/components/total-look/total-look';
 import { EmptyState } from '@/components/ui/empty-state';
 import { hasSupabaseConfig } from '@/lib/env';
 import { tokensToCss } from '@/lib/color';
-import { getHeroGarments } from '@/lib/queries/products';
+import { getCollectionLooks, getHeroGarments } from '@/lib/queries/products';
 
 export const metadata: Metadata = {
   description:
@@ -25,7 +26,7 @@ export default async function HomePage() {
     );
   }
 
-  const garments = await getHeroGarments();
+  const [garments, looks] = await Promise.all([getHeroGarments(), getCollectionLooks()]);
 
   if (garments.length === 0) {
     return (
@@ -49,6 +50,7 @@ export default async function HomePage() {
       {/* El escenario de la primera prenda, ya resuelto en el servidor. */}
       <style dangerouslySetInnerHTML={{ __html: tokensToCss(first.ambient) }} />
       <HeroAmbient garments={garments} />
+      {looks.length > 0 ? <TotalLook looks={looks} /> : null}
     </main>
   );
 }

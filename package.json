@@ -22,7 +22,9 @@
     "e2e": "node scripts/e2e-public.mjs && node scripts/e2e-admin.mjs",
     "e2e:public": "node scripts/e2e-public.mjs",
     "e2e:admin": "node scripts/e2e-admin.mjs",
-    "test": "tsx scripts/test-units.ts"
+    "test": "tsx scripts/test-units.ts",
+    "predev": "node scripts/clean-stale-build.mjs",
+    "audit": "node scripts/audit.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -48,6 +50,7 @@
     "@types/react-dom": "19.2.1",
     "eslint": "9.38.0",
     "eslint-config-next": "15.5.25",
+    "lighthouse": "^12.8.2",
     "playwright": "^1.56.1",
     "sharp": "0.34.4",
     "supabase": "^2.117.0",

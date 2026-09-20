@@ -94,8 +94,13 @@ export function BentoGrid({
         />
       ) : (
         <div className="grid auto-rows-min grid-cols-2 gap-3 sm:grid-cols-4">
-          {visible.map((product) => (
-            <BentoCard key={product.id} product={product} large={product.isFeatured} />
+          {visible.map((product, i) => (
+            <BentoCard
+              key={product.id}
+              product={product}
+              large={product.isFeatured}
+              priority={i < 2}
+            />
           ))}
         </div>
       )}

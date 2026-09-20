@@ -20,10 +20,11 @@ export async function generateMetadata({
   const product = await getProductBySlug(slug);
   if (!product) return { title: 'Prenda no encontrada' };
 
-  const color = product.colors[0];
   const description =
     product.description ?? product.headline ?? `${product.name}. Camisetas y suéteres de Carmisetas.`;
 
+  // Sin `images`: definirlas aquí anularía opengraph-image.tsx, y el recorte a
+  // secas, sin fondo, se ve mal en una tarjeta social.
   return {
     title: product.name,
     description,
@@ -33,7 +34,6 @@ export async function generateMetadata({
       title: product.name,
       description,
       url: `/prenda/${product.slug}`,
-      ...(color?.cutoutUrl ? { images: [{ url: color.cutoutUrl, alt: product.name }] } : {}),
     },
   };
 }

@@ -61,6 +61,8 @@ export function contrastRatio(a: string, b: string): number {
 
 export const AA_TEXT = 4.5;
 export const AA_LARGE = 3;
+/** WCAG 1.4.11: bordes e iconos que identifican un control. */
+export const AA_NON_TEXT = 3;
 
 /**
  * Elige el color de texto con mas contraste sobre `ambient`.
@@ -74,6 +76,23 @@ export function pickForeground(ambient: string): { hex: string; ratio: number } 
     if (ratio > best.ratio) best = { hex: candidate, ratio };
   }
   return best;
+}
+
+/**
+ * Hay una franja estrecha de luminancia media (alrededor de #7A7A7A) donde ni
+ * el texto oscuro ni el claro de la marca alcanzan AA. Un escenario asi no se
+ * puede rescatar con un gris intermedio: hay que rechazarlo en la entrada.
+ */
+export function isUsableAmbient(hex: string): boolean {
+  if (!isHex(hex)) return false;
+  const tokens = ambientTokens(hex);
+  // No basta con que el texto principal se lea: el secundario tiene que
+  // llegar tambien, y sobre las dos superficies donde aparece.
+  return (
+    contrastRatio(tokens['--ambient-fg'], hex) >= AA_TEXT &&
+    contrastRatio(tokens['--ambient-muted'], hex) >= AA_TEXT &&
+    contrastRatio(tokens['--ambient-muted'], tokens['--ambient-veil']) >= AA_TEXT
+  );
 }
 
 /** Mezcla lineal en sRGB. `t = 0` devuelve `a`, `t = 1` devuelve `b`. */
@@ -113,17 +132,42 @@ export function ambientTokens(ambientHex: string): AmbientTokens {
   const ambient = ambientHex.trim().toUpperCase();
   const { hex: fg } = pickForeground(ambient);
 
+  // La superficie levantada (chips, grupos de pildoras) es un color OPACO, no
+  // una capa translucida. Con transparencia, el fondo real depende de lo que
+  // haya debajo y el contraste que calculemos aqui deja de valer.
+  const veil = mix(ambient, fg, 0.07);
+
   return {
     '--ambient': ambient,
     '--ambient-fg': fg,
     // Mezclas hacia el ambiente en vez de alpha: evita que el texto se vea
-    // "sucio" cuando hay una imagen detras.
-    '--ambient-muted': mix(fg, ambient, 0.38),
-    '--ambient-hairline': mix(fg, ambient, 0.86),
-    '--ambient-veil': mix(ambient, fg, 0.05),
+    // "sucio" cuando hay una imagen detras. El cuanto no se elige a ojo: se
+    // busca el tono mas suave que todavia cumple el contraste sobre AMBAS
+    // superficies, porque el mismo texto aparece sobre las dos.
+    '--ambient-muted': fadeUntil(fg, [ambient, veil], AA_TEXT),
+    '--ambient-hairline': fadeUntil(fg, [ambient, veil], AA_NON_TEXT),
+    '--ambient-veil': veil,
     // La sombra nunca es gris neutro: es el propio ambiente, mas denso.
     '--ambient-shadow': mix(ambient, BRAND.fg, 0.55),
   };
+}
+
+/**
+ * El color mas cercano al fondo que todavia alcanza `minRatio` contra el.
+ *
+ * Es la diferencia entre "gris secundario porque queda bonito" y "gris
+ * secundario que se lee". Un texto auxiliar elegido a ojo se queda en 4.1:1 y
+ * falla AA sin que nadie lo note hasta la auditoria.
+ */
+function fadeUntil(from: string, backgrounds: string[], minRatio: number): string {
+  const base = backgrounds[0] as string;
+  let best = from;
+  for (let t = 0; t <= 0.95; t += 0.02) {
+    const candidate = mix(from, base, t);
+    if (backgrounds.some((bg) => contrastRatio(candidate, bg) < minRatio)) break;
+    best = candidate;
+  }
+  return best;
 }
 
 /** Serializa tokens a un bloque CSS (para inyectar en <style> desde el server). */
@@ -160,11 +204,12 @@ export function suggestAmbient(swatchHex: string): string {
     if (contrastRatio(swatch, ambient) >= MIN_SEPARATION) break;
   }
 
-  // Si al separarlo el texto se queda sin contraste, se cede en la separacion.
-  if (pickForeground(ambient).ratio < AA_TEXT) {
-    for (let t = 0.5; t >= 0; t -= 0.02) {
+  // Si al separarlo el escenario deja de ser legible, manda la legibilidad:
+  // se sigue empujando hasta encontrar uno que si sirva.
+  if (!isUsableAmbient(ambient)) {
+    for (let t = 0.02; t <= 0.95; t += 0.02) {
       const candidate = mix(swatch, target, t);
-      if (pickForeground(candidate).ratio >= AA_TEXT) return candidate;
+      if (isUsableAmbient(candidate)) return candidate;
     }
   }
   return ambient;

@@ -74,6 +74,7 @@ export function RackHanger({
               width={640}
               height={820}
               sizes="(max-width: 640px) 62vw, 30vw"
+              priority={index === 0}
               className={`mx-auto h-auto max-h-[46dvh] w-full max-w-[min(58vw,320px)] object-contain
                           transition-opacity duration-500
                           ${active ? 'opacity-100' : 'opacity-45'}`}

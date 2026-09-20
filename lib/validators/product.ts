@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isUsableAmbient } from '@/lib/color';
 import { GARMENT_SIZES, PRODUCT_VIEWS, STOCK_STATUSES } from '@/lib/supabase/database.types';
 
 /* Los mismos esquemas corren en el formulario y en la Server Action: lo que el
@@ -10,6 +11,15 @@ export const hexField = z
   .string()
   .trim()
   .regex(HEX, 'Usa un color en formato #RRGGBB');
+
+/**
+ * El color del escenario tiene un requisito extra: encima va texto. Si ni el
+ * claro ni el oscuro de la marca llegan a AA sobre él, no sirve por bonito que
+ * sea, y hay que decirlo al escribirlo y no en una auditoría meses después.
+ */
+export const ambientHexField = hexField.refine(isUsableAmbient, {
+  error: 'Sobre ese color el texto no se lee. Acláralo u oscurécelo un poco.',
+});
 
 /** COP entero. Sin decimales, sin separadores. */
 export const copField = z
@@ -60,7 +70,7 @@ export const colorSchema = z.object({
   product_id: uuidField,
   color_name: z.string().trim().min(2, 'Ponle nombre al color').max(60),
   swatch_hex: hexField,
-  ambient_hex: hexField,
+  ambient_hex: ambientHexField,
   cutout_url: z.string().trim().min(1).nullable(),
   sort_order: z.number().int().min(0).default(0),
 });

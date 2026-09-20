@@ -7,10 +7,18 @@
  * base de datos para comprobarse.
  */
 import assert from 'node:assert/strict';
-import { AA_TEXT, ambientTokens, contrastRatio, pickForeground, suggestAmbient } from '@/lib/color';
+import {
+  AA_NON_TEXT,
+  isUsableAmbient,
+  AA_TEXT,
+  ambientTokens,
+  contrastRatio,
+  pickForeground,
+  suggestAmbient,
+} from '@/lib/color';
 import { buildOrder, buildWhatsAppMessage, checkout, whatsappUrl } from '@/lib/checkout';
 import { discountPercent, effectivePrice, formatCOP, resolvePrice } from '@/lib/pricing';
-import { applyBulkPrice } from '@/lib/validators/product';
+import { ambientHexField, applyBulkPrice } from '@/lib/validators/product';
 import { BRAND } from '@/lib/tokens';
 
 let failed = 0;
@@ -88,6 +96,43 @@ test('los tokens del escenario salen completos', () => {
     assert.match(tokens[key as keyof typeof tokens], /^#[0-9A-F]{6}$/, `${key} inválido`);
   }
   assert.equal(tokens['--ambient-fg'], BRAND.bg, 'sobre un escenario oscuro, texto claro');
+});
+
+test('el texto secundario y las líneas cumplen su contraste', () => {
+  // Una muestra amplia, no solo los colores de la semilla: el admin puede
+  // poner cualquier ambient y estos dos tokens salen de él.
+  const ambients = [
+    '#DFD5C4', '#1C1E22', '#D78F72', '#D7E1E8', '#E1C49C', '#452229', '#C2BEB7',
+    '#FFFFFF', '#000000', '#B3B3B3', '#2F4F4F', '#FFD700', '#5A5A5A', '#9E9E9E',
+  ];
+  for (const ambient of ambients) {
+    assert.ok(isUsableAmbient(ambient), `${ambient} debería ser un escenario válido`);
+    const tokens = ambientTokens(ambient);
+    // El mismo texto aparece sobre el escenario Y sobre la superficie
+    // levantada (chips, grupos de píldoras): tiene que leerse en las dos.
+    for (const surface of [ambient, tokens['--ambient-veil']]) {
+      const muted = contrastRatio(tokens['--ambient-muted'], surface);
+      const hairline = contrastRatio(tokens['--ambient-hairline'], surface);
+      assert.ok(muted >= AA_TEXT, `muted sobre ${surface} solo llega a ${muted.toFixed(2)}:1`);
+      assert.ok(
+        hairline >= AA_NON_TEXT,
+        `hairline sobre ${surface} solo llega a ${hairline.toFixed(2)}:1`,
+      );
+    }
+  }
+});
+
+test('se rechaza el escenario donde ningún texto se lee', () => {
+  // Franja estrecha de luminancia media: ni el claro ni el oscuro llegan a AA.
+  for (const grey of ['#7A7A7A', '#787878', '#808080']) {
+    assert.equal(isUsableAmbient(grey), false, `${grey} no debería aceptarse`);
+    assert.equal(ambientHexField.safeParse(grey).success, false);
+  }
+  assert.equal(ambientHexField.safeParse('#DFD5C4').success, true);
+  // Y lo que propone el sistema nunca cae en esa franja.
+  for (const swatch of ['#7A7A7A', '#808080', '#6F6F6F', '#858585']) {
+    assert.ok(isUsableAmbient(suggestAmbient(swatch)), `suggestAmbient(${swatch}) no sirve`);
+  }
 });
 
 /* ------------------------------------------------------------- pedidos --- */

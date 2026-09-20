@@ -44,7 +44,7 @@ p.on('console', (m) => {
 
 
 await step('redirige a login sin sesion', async () => {
-  await p.goto(`${B}/admin/prendas`, { waitUntil: 'networkidle' });
+  await p.goto(`${B}/admin/prendas`, { waitUntil: 'domcontentloaded' });
   if (!p.url().includes('/admin/login')) throw new Error('no redirigio: ' + p.url());
 });
 
@@ -90,7 +90,7 @@ await step('el interruptor de visible persiste', async () => {
   const sw = p.getByRole('switch', { name: /Camiseta Bruma: visible/ });
   await sw.click();
   await p.waitForTimeout(2500);
-  await p.reload({ waitUntil: 'networkidle' });
+  await p.reload({ waitUntil: 'domcontentloaded' });
   const after = await p.getByRole('switch', { name: /Camiseta Bruma: visible/ }).getAttribute('aria-checked');
   if (after !== 'false') throw new Error('no persistio, quedo ' + after);
   await p.getByRole('switch', { name: /Camiseta Bruma: visible/ }).click();
@@ -135,7 +135,7 @@ await step('la matriz guarda una talla', async () => {
 await shot(p, 'adm-matriz');
 
 await step('vista previa de precios masivos', async () => {
-  await p.goto(`${B}/admin/precios`, { waitUntil: 'networkidle' });
+  await p.goto(`${B}/admin/precios`, { waitUntil: 'domcontentloaded' });
   // La previa va con rebote de 250 ms: hay que esperar a que traiga filas.
   await p.waitForFunction(
     () => /[1-9]\d* de [1-9]\d* prendas? cambian?/.test(document.body.innerText),
@@ -149,7 +149,7 @@ await step('vista previa de precios masivos', async () => {
 await shot(p, 'adm-precios');
 
 await step('el historial muestra el cambio de precio', async () => {
-  await p.goto(`${B}/admin/historial`, { waitUntil: 'networkidle' });
+  await p.goto(`${B}/admin/historial`, { waitUntil: 'domcontentloaded' });
   const text = await p.locator('body').innerText();
   if (!text.includes('Admin Uno')) throw new Error('no aparece el autor');
   if (!/titular|precio|disponibilidad/i.test(text)) throw new Error('no aparece el campo cambiado');
@@ -158,13 +158,13 @@ await step('el historial muestra el cambio de precio', async () => {
 await shot(p, 'adm-historial');
 
 await step('colecciones carga', async () => {
-  await p.goto(`${B}/admin/colecciones`, { waitUntil: 'networkidle' });
+  await p.goto(`${B}/admin/colecciones`, { waitUntil: 'domcontentloaded' });
   await p.waitForSelector('text=Categorías', { timeout: 15000 });
 });
 
 // ---------------------------------------------------------------- imagenes --
 await step('vuelve a una prenda para las imagenes', async () => {
-  await p.goto(`${B}/admin/prendas`, { waitUntil: 'networkidle' });
+  await p.goto(`${B}/admin/prendas`, { waitUntil: 'domcontentloaded' });
   await p.getByRole('link', { name: /Camiseta Bruma/ }).first().click();
   await p.waitForSelector('text=Colores', { timeout: 20000 });
 });
@@ -202,7 +202,7 @@ await step('etiqueta la vista y sube', async () => {
 });
 
 await step('la imagen queda en la ficha', async () => {
-  await p.reload({ waitUntil: 'networkidle' });
+  await p.reload({ waitUntil: 'domcontentloaded' });
   await p.waitForSelector('text=Colores', { timeout: 20000 });
   const after = await p.locator('li > button').count();
   if (after <= before) throw new Error(`antes ${before}, despues ${after}`);

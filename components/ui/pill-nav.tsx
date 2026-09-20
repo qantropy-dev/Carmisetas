@@ -18,9 +18,17 @@ export function PillNav({ children }: { children?: React.ReactNode }) {
   return (
     <header
       className="sticky top-0 z-30 flex items-center justify-between gap-3 px-5 sm:px-8"
-      style={{ height: 'var(--nav-h)', paddingTop: 'env(safe-area-inset-top, 0px)' }}
+      style={{
+        height: 'var(--nav-h)',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        // Sin fondo, el contenido pasa por debajo y choca con el logotipo.
+        // Opaco a propósito: con un fondo translúcido el color real deja de ser
+        // --ambient, y el contraste que calculamos para el texto ya no aplica.
+        // Sobre el escenario no se nota, porque es exactamente su color.
+        backgroundColor: 'var(--ambient)',
+      }}
     >
-      <Link href="/" className="shrink-0 leading-none">
+      <Link href="/" className="flex min-h-11 shrink-0 items-center leading-none">
         <span className="font-display text-[15px] font-extrabold uppercase tracking-[-0.045em]">
           Carmisetas
         </span>
@@ -29,7 +37,7 @@ export function PillNav({ children }: { children?: React.ReactNode }) {
       <nav
         aria-label="Secciones"
         className="flex items-center gap-0.5 rounded-[var(--radius-pill)] p-1"
-        style={{ backgroundColor: 'color-mix(in srgb, var(--ambient-fg) 7%, transparent)' }}
+        style={{ backgroundColor: 'var(--ambient-veil)' }}
       >
         {LINKS.map((link) => {
           const active =
@@ -39,7 +47,8 @@ export function PillNav({ children }: { children?: React.ReactNode }) {
               key={link.href}
               href={link.href}
               aria-current={active ? 'page' : undefined}
-              className={`rounded-[var(--radius-pill)] px-3.5 py-2 text-[13px] transition-colors sm:text-sm
+              className={`flex min-h-10 items-center rounded-[var(--radius-pill)] px-3.5 text-[13px]
+                transition-colors sm:text-sm
                 ${active
                   ? 'bg-[var(--ambient-fg)] text-[var(--ambient)]'
                   : 'text-[var(--ambient-muted)] hover:text-[var(--ambient-fg)]'}`}

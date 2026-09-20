@@ -17,7 +17,7 @@ Framer Motion · Embla · Supabase (Postgres + Auth + Storage + RLS) · Vercel.
 | 3 | Hero color ambiental | ✅ |
 | 4 | Catálogo: Perchero + Lista | ✅ |
 | 5 | Ficha + bolsa + WhatsApp | ✅ |
-| 6 | Total Look, motion fino, SEO y rendimiento | pendiente |
+| 6 | Total Look, motion fino, SEO y rendimiento | ✅ |
 
 ---
 
@@ -64,6 +64,7 @@ Imprime una contraseña temporal. El script avisa si se pasa de dos cuentas.
 | `npm run db:verify` | **Levanta un Postgres desechable y comprueba el RLS** |
 | `npm test` | **Pruebas de la lógica pura: precios, color y pedido** |
 | `npm run e2e` | **Humo del sitio y del panel en un navegador real, a 390 px** |
+| `npm run audit` | **Lighthouse sobre el build, emulando teléfono** |
 | `npm run seed` | Regenera recortes PNG + `seed.sql` desde `supabase/seed-data.ts` |
 | `npm run db:reset` | `supabase db reset` |
 | `npm run db:types` | Regenera `lib/supabase/database.types.ts` desde la base |
@@ -120,6 +121,34 @@ el primer paint ya sale correcto, sin parpadeo y sin JavaScript.
 prenda queda tan cerca de su escenario que dejaría de leerse.
 
 ---
+
+## Rendimiento y SEO
+
+`npm run audit` corre Lighthouse sobre el build emulando un teléfono. El listón
+son 90 en las cuatro categorías; el script sale con error si alguna baja, y
+además imprime las auditorías concretas que fallan, porque un 96 de
+accesibilidad puede esconder un contraste que no cumple.
+
+Estado actual: **perf 94–97 · accesibilidad 100 · buenas prácticas 100 · SEO 100.**
+
+Tres cosas que costaron encontrar y conviene no deshacer:
+
+1. **El sitio público no lee cookies.** `lib/queries/products.ts` usa el cliente
+   anónimo a propósito: leer cookies vuelve la página dinámica, anula el ISR y
+   —lo peor— saca la metadata fuera de `<head>`, donde Lighthouse y los
+   rastreadores simples no la ven. El panel sí usa la sesión, en sus propias
+   consultas.
+2. **Ninguna superficie con texto encima es translúcida.** Con transparencia el
+   color real depende de lo que haya debajo, y el contraste que calcula
+   `ambientTokens` deja de valer. Los chips y la barra usan `--ambient-veil`,
+   que es opaco.
+3. **Un `<a>` es inline: el padding no le da altura.** Los enlaces de la barra
+   medían 17 px de alto por mucho `py-2` que llevaran, por debajo del mínimo
+   táctil.
+
+Sitemap, `robots.txt`, metadata y Open Graph por prenda, imagen de Open Graph
+generada con el color de la prenda, y JSON-LD de `schema.org/Product` con una
+oferta por variante.
 
 ## Precios
 
@@ -189,6 +218,13 @@ la misma pieza, sin adivinar por el nombre.
 
 Falta el número: `NEXT_PUBLIC_WHATSAPP_NUMBER`, con indicativo de país y sin
 `+`. Sin él, la bolsa funciona y el botón avisa en vez de romperse.
+
+### Total Look
+
+La sección editorial del home: pestañas de colección, tipografía gigante junto
+a la prenda, indicador vertical de posición, tallas y precio grande. El
+escenario aquí es **de la sección**, no de la página: el hero manda en `:root`
+y Total Look aplica los suyos en su propio contenedor.
 
 ### Movimiento y accesibilidad
 

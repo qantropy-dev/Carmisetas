@@ -29,7 +29,7 @@ export function PriceTag({
       } ${className}`}
     >
       {price.compareAtLabel ? (
-        <span className="text-sm tabular-nums opacity-55 line-through">
+        <span className="text-sm tabular-nums line-through text-[var(--ambient-muted,var(--color-muted))]">
           <span className="sr-only">Antes </span>
           {price.compareAtLabel}
         </span>

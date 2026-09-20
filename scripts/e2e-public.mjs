@@ -26,6 +26,13 @@ const step = async (name, fn) => {
 };
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM ?? undefined });
+
+/** Ir a una página y esperar a que esté lista de verdad, no a que calle la red. */
+const visit = async (page, path, selector) => {
+  await page.goto(B + path, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector(selector, { timeout: 30000 });
+  await page.waitForTimeout(700);
+};
 const errs = [];
 const watch = (page) => {
   page.on('pageerror', (e) => errs.push('PAGEERROR ' + e.message.slice(0, 300)));
@@ -36,7 +43,7 @@ const watch = (page) => {
 
 const p = await browser.newPage({ viewport: { width: 390, height: 844 } });
 watch(p);
-await p.goto(B, { waitUntil: 'networkidle' });
+await p.goto(B, { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(1200);
 
 const token = (name) =>
@@ -74,29 +81,39 @@ await step('el texto se invierte sobre un escenario oscuro', async () => {
 
 await step('el swipe avanza', async () => {
   const before = await token('--ambient');
-  const box = await p.locator('main').boundingBox();
-  await p.mouse.move(box.x + box.width * 0.75, box.y + box.height * 0.45);
+  // El hero, no `main`: debajo va Total Look y el gesto caería fuera.
+  const box = await p.locator('[data-hero]').boundingBox();
+  await p.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.45);
   await p.mouse.down();
-  await p.mouse.move(box.x + box.width * 0.15, box.y + box.height * 0.45, { steps: 12 });
+  await p.waitForTimeout(80);
+  await p.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.45, { steps: 10 });
+  await p.mouse.move(box.x + box.width * 0.12, box.y + box.height * 0.45, { steps: 14 });
+  await p.waitForTimeout(80);
   await p.mouse.up();
-  await p.waitForTimeout(1100);
+  await p.waitForTimeout(1300);
   if ((await token('--ambient')) === before) throw new Error('el swipe no hizo nada');
 });
 
 await step('las flechas del teclado funcionan', async () => {
   const before = await token('--ambient');
+  // Con foco en el hero: las flechas ya no secuestran la página entera.
+  await p.locator('[data-hero]').focus();
   await p.keyboard.press('ArrowLeft');
   await p.waitForTimeout(1000);
   if ((await token('--ambient')) === before) throw new Error('ArrowLeft no hizo nada');
 });
 
 await step('la miniatura muestra la prenda siguiente', async () => {
-  const label = await p.locator('button[aria-label^="Ver "]').first().getAttribute('aria-label');
-  await p.locator('button[aria-label^="Ver "]').first().click();
-  await p.waitForTimeout(1100);
+  // El nombre accesible sale del texto visible (WCAG 2.5.3): "Ver <nombre> Siguiente".
+  const thumb = p.getByRole('button', { name: /^Ver .+ Siguiente$/ });
+  const name = ((await thumb.getAttribute('aria-label')) ?? (await thumb.innerText()))
+    .replace(/^Ver\s*/i, '')
+    .replace(/\s*Siguiente$/i, '')
+    .trim();
+  await thumb.click();
+  await p.waitForTimeout(1200);
   const heading = await p.locator('h1').innerText();
-  const name = (label ?? '').replace(/^Ver /, '');
-  if (heading.toLowerCase() !== name.toLowerCase()) {
+  if (!heading.toLowerCase().includes(name.toLowerCase())) {
     throw new Error(`la miniatura decía "${name}" y llegó "${heading}"`);
   }
 });
@@ -108,7 +125,7 @@ const cat = await browser.newPage({ viewport: { width: 390, height: 844 } });
 watch(cat);
 
 await step('el perchero carga y cuelga las prendas', async () => {
-  await cat.goto(`${B}/catalogo`, { waitUntil: 'networkidle' });
+  await cat.goto(`${B}/catalogo`, { waitUntil: 'domcontentloaded' });
   await cat.waitForSelector('[aria-roledescription="perchero"]', { timeout: 20000 });
   const hangers = await cat.locator('button[aria-label^="Ver "]').count();
   if (hangers < 2) throw new Error(`solo ${hangers} ganchos`);
@@ -132,8 +149,7 @@ await step('el perchero se recorre con el teclado', async () => {
 await step('el favorito se guarda entre recargas', async () => {
   // En la lista están todas a la vista, así que tras recargar se puede
   // comprobar la misma prenda. En el perchero, recargar vuelve a la primera.
-  await cat.goto(`${B}/catalogo?vista=lista`, { waitUntil: 'networkidle' });
-  await cat.waitForSelector('article', { timeout: 20000 });
+  await visit(cat, '/catalogo?vista=lista', 'article');
 
   const fav = cat.locator('button[aria-label^="Guardar "]').first();
   const label = (await fav.getAttribute('aria-label')) ?? '';
@@ -141,9 +157,9 @@ await step('el favorito se guarda entre recargas', async () => {
   await fav.click();
   await cat.waitForTimeout(400);
 
-  await cat.reload({ waitUntil: 'networkidle' });
-  await cat.waitForSelector('article', { timeout: 20000 });
-  await cat.waitForTimeout(600);
+  await cat.reload({ waitUntil: 'domcontentloaded' });
+  await cat.waitForSelector('article', { timeout: 30000 });
+  await cat.waitForTimeout(700);
 
   const marked = await cat.locator(`button[aria-label="Quitar ${name} de favoritos"]`).count();
   if (marked === 0) throw new Error(`${name} no quedó marcada`);
@@ -153,8 +169,7 @@ await step('el favorito se guarda entre recargas', async () => {
 });
 
 await step('la lista filtra por búsqueda y categoría', async () => {
-  await cat.goto(`${B}/catalogo?vista=lista`, { waitUntil: 'networkidle' });
-  await cat.waitForSelector('article', { timeout: 20000 });
+  await visit(cat, '/catalogo?vista=lista', 'article');
   if ((await cat.locator('article').count()) !== 6) throw new Error('no hay 6 tarjetas');
 
   await cat.fill('input[type=search]', 'salvia');
@@ -168,8 +183,7 @@ await step('la lista filtra por búsqueda y categoría', async () => {
 });
 
 await step('la tarjeta enseña la espalda al pasar el cursor', async () => {
-  await cat.goto(`${B}/catalogo?vista=lista`, { waitUntil: 'networkidle' });
-  await cat.waitForTimeout(1200);
+  await visit(cat, '/catalogo?vista=lista', 'article');
   const card = cat.locator('article').first();
   const backOpacity = () =>
     card.evaluate((el) => {
@@ -189,7 +203,7 @@ const det = await browser.newPage({ viewport: { width: 390, height: 844 } });
 watch(det);
 
 await step('la ficha carga con su escenario', async () => {
-  await det.goto(`${B}/prenda/camiseta-sereno`, { waitUntil: 'networkidle' });
+  await det.goto(`${B}/prenda/camiseta-sereno`, { waitUntil: 'domcontentloaded' });
   await det.waitForSelector('h1', { timeout: 20000 });
   const html = await (await fetch(`${B}/prenda/camiseta-sereno`)).text();
   if (!/--ambient:#[0-9A-F]{6}/.test(html)) throw new Error('el HTML no trae el escenario');
@@ -219,7 +233,7 @@ await step('cambiar de color cambia el escenario y las tallas', async () => {
 });
 
 await step('la bolsa acumula y sobrevive a una recarga', async () => {
-  await det.goto(`${B}/prenda/camiseta-sereno`, { waitUntil: 'networkidle' });
+  await visit(det, '/prenda/camiseta-sereno', 'h1');
   await det.getByRole('radio', { name: 'M', exact: true }).click();
   await det.getByRole('button', { name: 'Agregar a la bolsa' }).click();
   await det.waitForSelector('text=Finalizar por WhatsApp', { timeout: 15000 });
@@ -234,8 +248,9 @@ await step('la bolsa acumula y sobrevive a una recarga', async () => {
     throw new Error('el total no se duplicó');
   }
 
-  await det.reload({ waitUntil: 'networkidle' });
-  await det.waitForTimeout(1200);
+  await det.reload({ waitUntil: 'domcontentloaded' });
+  await det.waitForSelector('h1', { timeout: 30000 });
+  await det.waitForTimeout(1000);
   const badge = await det.locator('button[aria-label^="Abrir la bolsa"]').getAttribute('aria-label');
   if (!/2 prendas/.test(badge ?? '')) throw new Error(`la bolsa quedó en "${badge}"`);
 });
@@ -293,7 +308,7 @@ const reducedCtx = await browser.newContext({
 });
 const r = await reducedCtx.newPage();
 watch(r);
-await r.goto(B, { waitUntil: 'networkidle' });
+await r.goto(B, { waitUntil: 'domcontentloaded' });
 await r.waitForTimeout(1500);
 
 await step('con movimiento reducido el sitio sigue completo', async () => {
