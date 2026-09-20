@@ -16,7 +16,7 @@ Framer Motion · Embla · Supabase (Postgres + Auth + Storage + RLS) · Vercel.
 | 2 | Admin con recorte automático y color ambiental | ✅ |
 | 3 | Hero color ambiental | ✅ |
 | 4 | Catálogo: Perchero + Lista | ✅ |
-| 5 | Ficha + bolsa + WhatsApp | pendiente |
+| 5 | Ficha + bolsa + WhatsApp | ✅ |
 | 6 | Total Look, motion fino, SEO y rendimiento | pendiente |
 
 ---
@@ -62,7 +62,8 @@ Imprime una contraseña temporal. El script avisa si se pasa de dos cuentas.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run db:verify` | **Levanta un Postgres desechable y comprueba el RLS** |
-| `npm run e2e` | **Humo del panel en un navegador real, a 390 px** |
+| `npm test` | **Pruebas de la lógica pura: precios, color y pedido** |
+| `npm run e2e` | **Humo del sitio y del panel en un navegador real, a 390 px** |
 | `npm run seed` | Regenera recortes PNG + `seed.sql` desde `supabase/seed-data.ts` |
 | `npm run db:reset` | `supabase db reset` |
 | `npm run db:types` | Regenera `lib/supabase/database.types.ts` desde la base |
@@ -157,6 +158,37 @@ Medir la velocidad del carrusel en vez de la del puntero hace que el balanceo
 también aparezca con las flechas, con el teclado y con la inercia después de
 soltar, no solo mientras se arrastra. Cada gancho lleva una rigidez ligeramente
 distinta según su posición, para que la fila no se mueva en bloque.
+
+### Ficha de prenda
+
+Título, la prenda recortada sobre su color ambiental y una miniatura por vista.
+El selector de color cambia la galería **y** el escenario; el de talla
+deshabilita de verdad las agotadas (`disabled`, no solo atenuadas) y el precio
+sigue a la variante, así que una talla con precio propio se refleja al elegirla.
+
+El zoom usa el gesto nativo de cada plataforma: `touch-action: pinch-zoom` deja
+que el teléfono haga el pinch, y en escritorio se acerca hacia donde se hizo
+clic. El visor a pantalla completa se recorre con swipe, flechas y Escape.
+
+Abajo, dos píldoras fijas: «Agregar a la bolsa» y «Pedir ahora».
+
+## Bolsa y cierre
+
+La bolsa vive en `localStorage` y acumula **variantes** (prenda + color +
+talla), que es la unidad real de compra. Sobrevive a recargas y se sincroniza
+entre pestañas.
+
+Todo lo que decide qué se pide y cómo se comunica está en **`lib/checkout.ts`**,
+aparte de la interfaz. El panel de la bolsa llama a `checkout()` y abre lo que
+le devuelva; no sabe que existe WhatsApp. Conectar una pasarela de pago es
+cambiar esa función, sin tocar un componente.
+
+El mensaje lleva cada prenda con su color, su talla, su precio unitario, el
+total **y el enlace a la ficha**: quien atiende abre el link y ve exactamente
+la misma pieza, sin adivinar por el nombre.
+
+Falta el número: `NEXT_PUBLIC_WHATSAPP_NUMBER`, con indicativo de país y sin
+`+`. Sin él, la bolsa funciona y el botón avisa en vez de romperse.
 
 ### Movimiento y accesibilidad
 

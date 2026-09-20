@@ -5,6 +5,7 @@ import { ambientTokens } from '@/lib/color';
 import { hasSupabaseConfig } from '@/lib/env';
 import { effectivePrice, resolvePrice, type ResolvedPrice } from '@/lib/pricing';
 import { createClient } from '@/lib/supabase/server';
+import { createStaticClient } from '@/lib/supabase/static';
 import type {
   CollectionRow,
   GarmentSize,
@@ -361,10 +362,13 @@ export const getProductBySlug = cache(async (slug: string): Promise<Product | nu
   };
 });
 
-/** Slugs activos, para generateStaticParams y el sitemap. */
+/**
+ * Slugs activos, para generateStaticParams y el sitemap. Va con el cliente sin
+ * cookies: los dos corren fuera de una petición.
+ */
 export const getActiveSlugs = cache(async (): Promise<string[]> => {
   if (!hasSupabaseConfig()) return [];
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data, error } = await supabase.from('products').select('slug').order('sort_order');
   if (error) return [];
   return (data ?? []).map((r) => r.slug);

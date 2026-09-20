@@ -1,5 +1,8 @@
 import { LayoutGroup } from 'framer-motion';
+import { BagButton } from '@/components/bag/bag-button';
+import { BagDrawer } from '@/components/bag/bag-drawer';
 import { PillNav } from '@/components/ui/pill-nav';
+import { BagProvider } from '@/lib/bag';
 
 /**
  * `LayoutGroup` mantiene vivos los `layoutId` mientras se navega entre el
@@ -8,9 +11,14 @@ import { PillNav } from '@/components/ui/pill-nav';
  */
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <LayoutGroup>
-      <PillNav />
-      {children}
-    </LayoutGroup>
+    <BagProvider>
+      <LayoutGroup>
+        <PillNav>
+          <BagButton />
+        </PillNav>
+        {children}
+        <BagDrawer />
+      </LayoutGroup>
+    </BagProvider>
   );
 }
